@@ -1,0 +1,22 @@
+name: app_lifecycle_protector_example
+description: "Demonstrates how to use the app_lifecycle_protector package."
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.1.0 <4.0.0'
+  flutter: ">=3.13.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  app_lifecycle_protector:
+    path: ../
+  logging: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
