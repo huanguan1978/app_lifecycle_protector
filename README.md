@@ -120,6 +120,19 @@ void onResume() {
 - **Implementation Guide**: [English](doc/en/EXAMPLE.md) | [Chinese](doc/zh/EXAMPLE.md)
 - **Example Code**: [example/](example/)
 
+## Real-world Implementation
+
+`app_lifecycle_protector` is not just a theoretical component; it has been deeply battle-tested in [ChaBox](https://github.com/huanguan1978/chacrypt/tree/main/chabox), the core application of the [ChaCrypt](https://github.com/huanguan1978/chacrypt) ecosystem.
+
+**ChaCrypt** is an offline file encryption/decryption ecosystem based on the `ChaCha20-Poly1305` standard, and **ChaBox** is its graphical offline file security workstation. In ChaBox, we utilize this component to build a comprehensive **Active Defense** system:
+
+*   **App Lock**: Controls access after launch, ensuring the app can only be used after your authorization.
+*   **Idle Lock**: Automatically triggers a lock if the app remains inactive for a period after login.
+*   **Anti-Screenshot/Recording**: Provides software-level protection against other malicious apps on the same device capturing or recording the screen.
+*   **Screen Masking**: Triggers a privacy mask during app switching (mobile) to prevent sensitive information leakage.
+
+If you are looking for how to integrate these security features into a complex, production-grade application, ChaBox serves as an excellent reference. Visit the [ChaCrypt GitHub repository](https://github.com/huanguan1978/chacrypt) to learn more.
+
 ### Support the Project 💖
 
 If you find this package useful and would like to see it continue to improve and evolve, please consider showing your support:

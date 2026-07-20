@@ -1,7 +1,7 @@
 name: app_lifecycle_protector
 description: "A lifecycle-driven Flutter toolkit for custom business logic, periodic task scheduling, and automated UI security."
 
-version: 0.0.1
+version: 0.0.2
 
 repository: https://github.com/huanguan1978/app_lifecycle_protector
 
