@@ -161,7 +161,7 @@ ScreenProtector(
 
 - **点亮认可**：在 GitHub 上点亮 **Star** 或在 pub.dev 上点击 **Like**。这不仅是对我的巨大鼓舞，也能让更多开发者发现并受益于这个工具。
 - **赞助开发者 (全球)**：任何数额的支持，无论大小，都是对我工作的极大肯定。您可以通过 [GitHub Sponsors](https://github.com/sponsors/huanguan1978) 或 [Buy Me a Coffee](https://buymeacoffee.com/huanguan1978) 给予赞助。
-- **通过爱发电赞助 (中国大陆)**：中国大陆的用户也可以通过 [爱发电 (Ifdian)](https://ifdian.net/a/huangaun1978) 表达您的支持。
+- **通过爱发电赞助 (中国大陆)**：中国大陆的用户也可以通过 [爱发电 (Ifdian)](https://ifdian.net/a/huanguan1978) 表达您的支持。
 
 *感谢您的支持，这是让我能够专注于项目持续迭代的核心动力；因为有您，更多人能更早地从这个工具中受益。*
 

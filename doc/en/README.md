@@ -161,7 +161,7 @@ If you find this package useful, please consider showing your support:
 
 - ⭐ **Star the Repo**: Give it a **Star** on GitHub or a **Like** on pub.dev.
 - ☕ **Support the Developer (Global)**: Donate via [GitHub Sponsors](https://github.com/sponsors/huanguan1978) or [Buy Me a Coffee](https://buymeacoffee.com/huanguan1978).
-- 🐼 **Support via Ifdian (Mainland China)**: Support via [Ifdian](https://ifdian.net/a/huangaun1978).
+- 🐼 **Support via Ifdian (Mainland China)**: Support via [Ifdian](https://ifdian.net/a/huanguan1978).
 
 *Thank you for your support!*
 
