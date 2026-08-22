@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show AppExitResponse;
 import 'package:logging/logging.dart';
 import 'package:flutter/material.dart';
 
@@ -18,7 +19,10 @@ abstract class AppLifecycleEvent {
   void onRestart() {}
 
   void onStateChange(AppLifecycleState state) {}
-  AppExitRequestCallback? onExitRequested;
+
+  Future<AppExitResponse> onExitRequested() async {
+    return AppExitResponse.exit;
+  }
 }
 
 /// Manages periodic tasks aligned with the application's lifecycle.
@@ -125,7 +129,8 @@ class AppLifecycleScheduler {
   bool isAlive([Duration? duration]) {
     final lastAlive = _aliveAt;
     if (lastAlive == null) return false;
-    final isAlive = DateTime.now().difference(lastAlive) < (duration ?? aliveDuration);
+    final isAlive =
+        DateTime.now().difference(lastAlive) < (duration ?? aliveDuration);
     _logger?.finest('Monitor task isAlive: $isAlive');
     return isAlive;
   }

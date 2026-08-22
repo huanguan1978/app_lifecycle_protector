@@ -20,6 +20,7 @@ Flutter's built-in `AppLifecycleListener` is great for simple state changes, but
 
 *   **Smart `onPeriodic` Polling**: A resource-friendly inspection loop that **runs only when the app is visible**. It automatically pauses in the background, preventing unnecessary CPU/battery drain—ideal for **network monitoring** or **scheduled API tasks**.
 *   **Decoupled Logic**: Move complex lifecycle logic (like heartbeats, data refreshes, or security checks) out of your Widgets and into a clean, testable `AppLifecycleEvent` class.
+*   **Graceful Exit Handling**: Override `onExitRequested()` to intercept app shutdown and perform cleanup before exit, such as closing database connections or saving app state.
 *   **Semantic UI Overlays**: Effortlessly toggle "Mask" (privacy) and "Lock" (authorization) states across your entire application.
 
 ---
@@ -45,6 +46,13 @@ class MySmartHandler extends AppLifecycleEvent {
       screenSecure.lock(); 
     }
   }
+
+  @override
+  Future<AppExitResponse> onExitRequested() async {
+    print('App Exit...');
+    return AppExitResponse.exit;
+  }
+
 }
 ```
 

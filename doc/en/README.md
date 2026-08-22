@@ -17,6 +17,7 @@ This is the soul of the toolkit. Unlike a standard `Timer`, the `onPeriodic` tas
 By extending `AppLifecycleEvent`, you can completely decouple logic from the UI tree:
 *   **Clean Architecture**: No more repeating `didChangeAppLifecycleState` listeners across multiple pages.
 *   **Comprehensive Hooks**: Beyond `onResume/onPause`, it supports fine-grained control like `onShow/onHide`, `onRestart`, and `onExitRequested`.
+*   **Graceful Exit Handling**: Override `onExitRequested()` to intercept app shutdown and perform cleanup before exit, such as closing database connections, saving app settings, or persisting cache.
 
 ---
 

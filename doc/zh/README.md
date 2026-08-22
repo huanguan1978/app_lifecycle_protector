@@ -17,6 +17,7 @@
 通过继承 `AppLifecycleEvent`，你可以将逻辑从 UI 树中彻底解耦：
 *   **架构清晰**：不再需要在多个页面重复监听 `didChangeAppLifecycleState`。
 *   **全量钩子**：除了 `onResume/onPause`，还支持 `onShow/onHide`、`onRestart` 以及 `onExitRequested` 等精细化控制。
+*   **优雅退出处理**：覆盖 `onExitRequested()` 可拦截应用关闭，在退出前执行清理逻辑，例如关闭数据库连接、保存配置和缓存。
 
 ---
 
