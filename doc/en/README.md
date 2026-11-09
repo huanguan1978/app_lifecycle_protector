@@ -8,10 +8,10 @@ While it provides out-of-the-box privacy masking and security locking, its core 
 
 In complex applications, logic often ends up scattered across various widget lifecycle callbacks, leading to fragmented and hard-to-maintain code. This package solves this pain point through the following mechanisms:
 
-### 1. Enhanced `onPeriodic` Polling
-This is the soul of the toolkit. Unlike a standard `Timer`, the `onPeriodic` task **only triggers when the app is visible**:
-*   **Resource Friendly**: When the app enters the background or is hidden, polling automatically silences, stopping unnecessary CPU and network consumption.
-*   **Smart Scenarios**: Perfect for "keep-alive heartbeats only when used," "idle timeout auto-lock," or "periodic sensitive cache clearing."
+### 1. Full-Lifecycle `onPeriodic` Scheduling with State Awareness
+This is the core feature of the toolkit. Unlike a standard `Timer`, the `onPeriodic` task **runs continuously across the entire active application lifecycle** (until suspended by the OS or terminated):
+*   **Foreground/Background State Awareness**: Built-in read-only getters `isInForeground` and `isInBackground` empower developers to easily distinguish between tasks that should only execute when visible and tasks that should continue in the background.
+*   **Full-Spectrum Protection**: Even when the app is backgrounded or minimized, idle timeout checks remain active. When an idle timeout occurs, it locks proactively in the background, eliminating any visual leakage when resuming; automatic recovery is built-in upon returning to the foreground.
 
 ### 2. Event-Driven Logic Decoupling
 By extending `AppLifecycleEvent`, you can completely decouple logic from the UI tree:
@@ -25,8 +25,8 @@ By extending `AppLifecycleEvent`, you can completely decouple logic from the UI 
 
 | Use Case | Description |
 | :--- | :--- |
-| **Business Orchestration** | Start **front-end scheduled tasks (e.g., API calls & result distribution)**, network connectivity detection, and automated data management (cleaning, refreshing, pulling) only when visible, achieving true "run on demand." |
-| **Idle Timeout Protection** | Automatically trigger security locks after long periods of user inactivity using the `onPeriodic` and `isAlive()` mechanism. |
+| **Business Orchestration** | Leverage `isInForeground` and `isInBackground` to orchestrate high-frequency tasks (API polling, UI refresh) only in foreground and lightweight tasks (syncing, cache maintenance) in background for true "run on demand." |
+| **Idle Timeout Protection** | Automatically trigger security locks after long periods of user inactivity using `onPeriodic` and `isAlive()`, with background idle timeouts proactively locking behind the scenes. |
 | **Privacy Masking** | Automatically overlay a privacy layer in the multitasking switcher to prevent sensitive data leakage via system snapshots. |
 | **Launch Authorization** | Ensure users must pass authentication (biometrics or password) before accessing sensitive data on app startup. |
 
@@ -45,14 +45,21 @@ class MyLogicHandler extends AppLifecycleEvent {
 
   @override
   void onPeriodic() {
-    // 【Enhanced Polling】Runs every 10s ONLY when the app is visible
-    // Example: Check if the user has been idle for more than 5 minutes
+    // 1. [Full-Lifecycle Security Check] Runs in foreground & background
+    // Example: Proactively lock in background if user has been idle for > 5 mins
     if (!AppLifecycleScheduler.instance.isAlive()) {
       screenSecure.lock(); 
     }
     
-    // Also perform non-security logic, e.g., maintaining a heartbeat
-    print("App visible, performing business inspection...");
+    // 2. [On-Demand Foreground Business] Runs ONLY when visible to save battery/bandwidth
+    if (isInForeground) {
+      print("App is in foreground, refreshing UI data or keeping heartbeat...");
+    }
+
+    // 3. [Optional Background Task] Runs when hidden/backgrounded
+    if (isInBackground) {
+      // E.g., track background elapsed duration or persist unsaved drafts
+    }
   }
 
   @override
@@ -133,10 +140,11 @@ ScreenProtector(
 
 ## 🔧 Core API Reference
 
-| Class/Method | Description |
+| Class/Method/Property | Description |
 | :--- | :--- |
-| `AppLifecycleScheduler` | Global singleton managing periodic polling and lifecycle distribution. |
-| `AppLifecycleEvent` | Base class for event handlers, including `onPeriodic` and all system-level hooks. |
+| `AppLifecycleScheduler` | Global singleton managing full-lifecycle periodic scheduling and lifecycle distribution. |
+| `AppLifecycleEvent` | Base class for event handlers, including `onPeriodic`, state awareness, and all system hooks. |
+| `isInForeground` / `isInBackground` | Read-only getters on `AppLifecycleEvent` and `AppLifecycleScheduler` indicating whether the app is in the foreground (visible) or background (hidden). |
 | `ScreenSecure` | State manager controlling `isMasked` (privacy mask) and `isLocked` (security lock). |
 | `ScreenProtector` | UI component that handles overlay logic using a `Stack`. |
 | `updateAliveStatus()` | Updates the last active timestamp. Recommended to call in a global `Listener`'s `onPointerDown`. |

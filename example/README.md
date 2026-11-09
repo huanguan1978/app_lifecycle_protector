@@ -22,7 +22,7 @@ To ensure this example runs "out of the box" without requiring native permission
 *   In a real app, replace this with the [local_auth](https://pub.dev/packages/local_auth) package.
 
 ### 3. Lifecycle Logging
-A real-time log viewer at the bottom of the screen shows when events like `onPeriodic` (inspection), `onPause` (backgrounding), and `onResume` (foregrounding) occur.
+A real-time log viewer at the bottom of the screen shows when events like `onPeriodic` (with Foreground/Background state awareness), `onPause` (backgrounding), and `onResume` (foregrounding) occur.
 
 ## ⚙️ Demo Configurations
 

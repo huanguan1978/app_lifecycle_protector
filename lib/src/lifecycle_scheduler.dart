@@ -5,6 +5,14 @@ import 'package:flutter/material.dart';
 
 /// Abstract class to define lifecycle event handlers.
 abstract class AppLifecycleEvent {
+  bool _isInForeground = true;
+
+  /// Whether the application is currently running in the foreground (visible).
+  bool get isInForeground => _isInForeground;
+
+  /// Whether the application is currently running in the background (hidden or minimized).
+  bool get isInBackground => !_isInForeground;
+
   void onPeriodic() {}
   void initialize() {}
   void dispose() {}
@@ -46,28 +54,44 @@ class AppLifecycleScheduler {
     _initListener();
   }
 
+  /// Whether the application is currently running in the foreground (visible).
+  bool get isInForeground => _event.isInForeground;
+
+  /// Whether the application is currently running in the background (hidden or minimized).
+  bool get isInBackground => _event.isInBackground;
+
   void _initListener() {
     _listener = AppLifecycleListener(
       onShow: () {
-        _logger?.finest('AppLifecycle: onShow. Starting periodic timer.');
+        _logger?.finest('AppLifecycle: onShow. Ensuring periodic timer is active.');
+        _event._isInForeground = true;
         _start();
         _event.onShow();
       },
       onHide: () {
-        _logger?.finest('AppLifecycle: onHide. Stopping periodic timer.');
-        _stop();
+        _logger?.finest('AppLifecycle: onHide. Keeping periodic timer running in background.');
+        _event._isInForeground = false;
+        // Keep the timer running while the app is in background until suspended or terminated.
         _event.onHide();
       },
       onDetach: () {
-        _logger?.finest('AppLifecycle: onDetach. Stopping periodic timer.');
+        _logger?.finest('AppLifecycle: onDetach. Stopping periodic timer on app termination.');
         _stop();
         _event.onDetach();
       },
       onInactive: _event.onInactive,
       onPause: _event.onPause,
-      onResume: _event.onResume,
+      onResume: () {
+        _logger?.finest('AppLifecycle: onResume. Ensuring periodic timer is active.');
+        _start();
+        _event.onResume();
+      },
       onRestart: _event.onRestart,
-      onExitRequested: _event.onExitRequested,
+      onExitRequested: () async {
+        _logger?.finest('AppLifecycle: onExitRequested. Stopping periodic timer.');
+        _stop();
+        return _event.onExitRequested();
+      },
       onStateChange: _event.onStateChange,
     );
   }

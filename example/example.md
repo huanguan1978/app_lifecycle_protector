@@ -28,12 +28,17 @@ class MySecurityHandler extends AppLifecycleEvent {
 
   @override
   void onPeriodic() {
-    // [Enhanced Inspection] Triggered by the scheduler (default every 10s)
+    // [Full-Lifecycle Inspection] Triggered by the scheduler across foreground and background
     final scheduler = AppLifecycleScheduler.instance;
     
-    // Auto-lock if the user is idle for more than the predefined duration
+    // Auto-lock if the user is idle for more than the predefined duration (even when in background)
     if (!scheduler.isAlive()) {
       screenSecure.lock(); 
+    }
+
+    // Conditionally execute foreground-only logic using isInForeground
+    if (isInForeground) {
+      // Foreground tasks...
     }
   }
 

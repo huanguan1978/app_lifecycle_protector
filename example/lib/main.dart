@@ -35,7 +35,8 @@ class MySecurityHandler extends AppLifecycleEvent {
   void onPeriodic() {
     final scheduler = AppLifecycleScheduler.instance;
     final isAlive = scheduler.isAlive();
-    onLog('[onPeriodic] IsAlive: $isAlive. Check performed.');
+    final mode = isInForeground ? 'Foreground' : 'Background';
+    onLog('[onPeriodic][$mode] IsAlive: $isAlive. Check performed.');
 
     if (!isAlive) {
       onLog('[Action] Idle timeout reached. Locking app!');

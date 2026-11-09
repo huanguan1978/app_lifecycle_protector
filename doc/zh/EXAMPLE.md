@@ -28,12 +28,17 @@ class MySecurityHandler extends AppLifecycleEvent {
 
   @override
   void onPeriodic() {
-    // 【增强型巡检】仅在应用可见时运行（默认由调度器每 10 秒触发一次）
+    // 【全周期巡检】前后台持续运行（由调度器按设定周期触发）
     final scheduler = AppLifecycleScheduler.instance;
     
-    // 如果用户闲置时间超过预设时长（例如 3 分钟），自动锁屏
+    // 如果用户闲置时间超过预设时长（例如 3 分钟），自动锁屏（后台超时亦可主动加锁）
     if (!scheduler.isAlive()) {
       screenSecure.lock(); 
+    }
+
+    // 结合 isInForeground / isInBackground，按需执行前后台特定逻辑
+    if (isInForeground) {
+      // 仅前台执行的轻量业务...
     }
   }
 

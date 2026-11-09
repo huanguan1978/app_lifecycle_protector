@@ -18,7 +18,7 @@ An **event-driven lifecycle scheduler** and business logic orchestrator for Flut
 
 Flutter's built-in `AppLifecycleListener` is great for simple state changes, but it lacks high-level abstractions for complex background tasks and security. This package is built as an **Event-Driven Orchestrator**:
 
-*   **Smart `onPeriodic` Polling**: A resource-friendly inspection loop that **runs only when the app is visible**. It automatically pauses in the background, preventing unnecessary CPU/battery drain—ideal for **network monitoring** or **scheduled API tasks**.
+*   **Active `onPeriodic` Scheduler with State Awareness**: A continuous lifecycle-aware inspection loop that **runs across the entire application lifecycle** (until suspended or terminated). Built-in `isInForeground` and `isInBackground` flags give you fine-grained control to distinguish between foreground-only tasks (e.g., API polling, UI refreshes) and persistent background tasks (e.g., proactive idle timeout auto-lock, heartbeats).
 *   **Decoupled Logic**: Move complex lifecycle logic (like heartbeats, data refreshes, or security checks) out of your Widgets and into a clean, testable `AppLifecycleEvent` class.
 *   **Graceful Exit Handling**: Override `onExitRequested()` to intercept app shutdown and perform cleanup before exit, such as closing database connections or saving app state.
 *   **Semantic UI Overlays**: Effortlessly toggle "Mask" (privacy) and "Lock" (authorization) states across your entire application.
@@ -37,13 +37,15 @@ class MySmartHandler extends AppLifecycleEvent {
 
   @override
   void onPeriodic() {
-    // This runs every 10s ONLY when the app is visible
-    // 1. Business Logic: e.g., Check network or fetch notifications
-    print("Performing resource-friendly API polling...");
-
-    // 2. Security Logic: e.g., Idle timeout check
+    // 1. Security Logic: Active in both foreground and background
+    // Automatically locks if idle timeout is reached, even while backgrounded!
     if (!AppLifecycleScheduler.instance.isAlive()) {
       screenSecure.lock(); 
+    }
+
+    // 2. Business Logic: Conditionally run only when the app is in the foreground
+    if (isInForeground) {
+      print("Performing resource-friendly foreground API polling...");
     }
   }
 
