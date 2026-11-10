@@ -1,3 +1,8 @@
+## 0.0.5
+
+* Added `NetworkProber` for reusable network reachability checks with status notifications, request reuse, retries, and fallback endpoints.
+* Added `RouteSentry` to monitor configured routes and activate route-aware network checks.
+
 ## 0.0.4
 
 * Enhanced `onPeriodic` scheduler to run continuously across the active lifecycle (foreground & background) until suspended or terminated.
