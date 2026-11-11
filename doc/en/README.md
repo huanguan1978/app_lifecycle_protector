@@ -112,6 +112,49 @@ only once. To release it, call
 user interaction, then use `isAlive()` to check activity. Before an active
 time has been recorded, `isAlive()` returns `false`.
 
+## AI coding agent skills
+
+This package includes skills for the lifecycle framework, screen protection,
+and network probing. After adding the package dependency and running
+`flutter pub get`, run this command from the root of your Flutter project to
+install the skills for GitHub Copilot in VS Code:
+
+```shell
+dart run skills@ get -p app_lifecycle_protector --agent copilot
+```
+
+The skills CLI installs them into `.github/skills/`, VS Code Copilot's
+project-level skills directory. Copilot is not auto-detected by the CLI, so
+specify `--agent copilot`. Adding the package dependency or running `pub get`
+does not install the skills automatically.
+
+The `-p app_lifecycle_protector` option limits discovery to this package, but
+the command still prompts you to select skills. To install all three skills
+from this package, select all three in the prompt (for example, press
+`Ctrl+A`, then `Enter`). Avoid `--all` if you only want this package's skills:
+it installs all available skills from all dependencies and configured sources.
+
+Open the project in VS Code and start a new Copilot Chat session. The skills
+should be available from the `/` menu. You can invoke one directly, or Copilot
+may select it based on the request; automatic selection is not guaranteed.
+
+The CLI also supports these common agents:
+
+| Agent | Option | Project skills directory |
+| --- | --- | --- |
+| Antigravity | `--agent antigravity` | `.agents/skills/` |
+| Claude Code | `--agent claude` | `.claude/skills/` |
+| Cline | `--agent cline` | `.cline/skills/` |
+| OpenAI Codex | `--agent codex` | `.agents/skills/` |
+| Cursor | `--agent cursor` | `.cursor/skills/` |
+| GitHub Copilot | `--agent copilot` | `.github/skills/` |
+| OpenCode | `--agent opencode` | `.opencode/skills/` |
+| Generic Agent Skills client | `--agent generic` | `.agents/skills/` |
+
+For another agent, replace `copilot` in the command with its option value.
+See the [`skills` CLI documentation](https://pub.dev/packages/skills) for the
+current list and details.
+
 ## Support the project
 
 If you find this package useful, consider supporting the project:

@@ -69,3 +69,32 @@ flutter run
 本包依赖 Flutter SDK 和 `logging`，不依赖平台插件或特定状态管理方案。除 `onResume()` 外，`AppLifecycleEvent` 还提供显示、隐藏、暂停、退出等事件回调；它们对应不同通知，不应视为同义方法。
 
 `AppLifecycleScheduler` 是全局单例，`initialize()` 只会创建一次；需要释放时调用 `AppLifecycleScheduler.instance.dispose()`。空闲超时可通过 `aliveDuration` 设置时长，在应用启动和用户交互时调用 `updateAliveStatus()`，再用 `isAlive()` 检查。首次记录活跃时间之前，`isAlive()` 返回 `false`。
+
+## AI 编码助手 skills
+
+本包提供生命周期框架、屏幕保护和网络探测相关的 skills。在 Flutter 项目中添加本包依赖并运行 `flutter pub get` 后，从项目根目录运行以下命令，可为 VS Code 中的 GitHub Copilot 发现并选择安装：
+
+```shell
+dart run skills@ get -p app_lifecycle_protector --agent copilot
+```
+
+CLI 会将 skills 安装到 `.github/skills/`，这是 VS Code Copilot 的项目级 skills 目录。`skills` CLI 不会自动检测 Copilot，因此需要显式指定 `--agent copilot`。仅添加依赖或运行 `pub get` 不会自动安装 skills。
+
+`-p app_lifecycle_protector` 会将发现范围限定为本包，但命令仍会显示交互式选择列表。要安装本包的全部三个 skills，请在列表中全选（例如按 `Ctrl+A`，再按 `Enter`）。如果只想安装本包的 skills，不要加 `--all`；该选项会安装所有依赖和已配置来源中可用的 skills。
+
+安装后，在 VS Code 中打开项目并新建 Copilot Chat 会话。skills 应可在 `/` 菜单中找到；你可以直接调用某个 skill，也可以让 Copilot 根据请求尝试选择。能发现 skill 不代表每次相关请求都会自动触发它。
+
+`skills` CLI 也支持其他常见编程助手。常用选项及其项目级 skills 目录如下：
+
+| 编程助手 | 选项 | 项目级 skills 目录 |
+| --- | --- | --- |
+| Antigravity | `--agent antigravity` | `.agents/skills/` |
+| Claude Code | `--agent claude` | `.claude/skills/` |
+| Cline | `--agent cline` | `.cline/skills/` |
+| OpenAI Codex | `--agent codex` | `.agents/skills/` |
+| Cursor | `--agent cursor` | `.cursor/skills/` |
+| GitHub Copilot | `--agent copilot` | `.github/skills/` |
+| OpenCode | `--agent opencode` | `.opencode/skills/` |
+| 通用 Agent Skills 客户端 | `--agent generic` | `.agents/skills/` |
+
+为其他助手安装时，将命令中的 `copilot` 替换为对应选项值。支持列表可能更新，详见 [`skills` CLI 文档](https://pub.dev/packages/skills)。

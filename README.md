@@ -103,6 +103,53 @@ The first periodic callback occurs after the configured interval.
 | Screen protection | [English](doc/en/screen_secure.md) · [Chinese](doc/zh/screen_secure.md) |
 | Network probing | [English](doc/en/network_prober.md) · [Chinese](doc/zh/network_prober.md) |
 
+## AI coding agent skills
+
+This package ships skills for the lifecycle framework, screen protection, and
+network probing. After adding this package as a dependency and running
+`flutter pub get`, install the skills you want from the root of your Flutter
+project:
+
+```shell
+dart run skills@ get -p app_lifecycle_protector --agent copilot
+```
+
+The command lets you select individual skills and installs them in
+`.github/skills/`, VS Code Copilot's project-level skill directory. The Dart
+skills CLI does not auto-detect Copilot, so pass `--agent copilot` explicitly.
+Adding the Flutter dependency or running `pub get` does not install or enable
+skills automatically.
+
+The `-p app_lifecycle_protector` option limits discovery to this package, but
+the command still prompts you to choose skills. To install all three skills
+from this package, select all three in the prompt (for example, press
+`Ctrl+A`, then `Enter`). Avoid `--all` if you only want this package's skills:
+that option installs all available skills from all dependencies and configured
+sources.
+
+Open the project in VS Code and start a new Copilot Chat session. The skills
+should be available from the `/` menu; you can invoke one directly or let
+Copilot select it based on the request. Availability does not guarantee
+automatic selection for every matching request.
+
+The CLI also supports other coding agents. Common targets and their project
+skill directories include:
+
+| Agent | Option | Project skills directory |
+| --- | --- | --- |
+| Antigravity | `--agent antigravity` | `.agents/skills/` |
+| Claude Code | `--agent claude` | `.claude/skills/` |
+| Cline | `--agent cline` | `.cline/skills/` |
+| OpenAI Codex | `--agent codex` | `.agents/skills/` |
+| Cursor | `--agent cursor` | `.cursor/skills/` |
+| GitHub Copilot | `--agent copilot` | `.github/skills/` |
+| OpenCode | `--agent opencode` | `.opencode/skills/` |
+| Generic Agent Skills client | `--agent generic` | `.agents/skills/` |
+
+For example, replace `copilot` in the command above with `cursor` to install
+for Cursor. See the [`skills` CLI documentation](https://pub.dev/packages/skills)
+for the current agent list and options.
+
 ## Example app
 
 The runnable Flutter app in [`example/`](example/) demonstrates the lifecycle
