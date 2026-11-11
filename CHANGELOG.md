@@ -1,3 +1,8 @@
+## 0.0.6
+
+* Restructured the package documentation and refactored the example app.
+* Added package skills for the lifecycle framework, screen protection, and network probing.
+
 ## 0.0.5
 
 * Added `NetworkProber` for reusable network reachability checks with status notifications, request reuse, retries, and fallback endpoints.
