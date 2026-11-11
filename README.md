@@ -1,157 +1,176 @@
 # App Lifecycle Protector
 
-An **event-driven lifecycle scheduler** and business logic orchestrator for Flutter.
+A Flutter lifecycle framework for centralizing app lifecycle events and
+periodic tasks, with reusable screen-protection and network-probing features.
 
 [![Pub Version](https://img.shields.io/pub/v/app_lifecycle_protector.svg)](https://pub.dev/packages/app_lifecycle_protector)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-## 📸 Key Features & UI
+[English](doc/en/README.md) | [Chinese](doc/zh/README.md)
 
-| 1. Authorization on Launch | 2. Biometric Fallback | 3. Semantic Activity Tracking |
-| :---: | :---: | :---: |
-| ![Start Lock](doc/assets/screenshot_lock_biometric.png) | ![Fallback](doc/assets/screenshot_lock_passphrase.png) | ![Home](doc/assets/screenshot_home.png) |
-| Locks the app immediately upon startup. | Seamlessly transitions to passphrase. | Updates "alive" status on interaction. |
+## What this package provides
 
----
+The package has two layers: a lifecycle framework and reusable features built
+on top of it.
 
-## 🌟 Why this package?
+### Lifecycle framework
 
-Flutter's built-in `AppLifecycleListener` is great for simple state changes, but it lacks high-level abstractions for complex background tasks and security. This package is built as an **Event-Driven Orchestrator**:
+- **`AppLifecycleEvent`** defines your lifecycle and periodic-task callbacks.
+- **`AppLifecycleScheduler`** dispatches lifecycle events and schedules
+  periodic calls to your handler.
 
-*   **Active `onPeriodic` Scheduler with State Awareness**: A continuous lifecycle-aware inspection loop that **runs across the entire application lifecycle** (until suspended or terminated). Built-in `isInForeground` and `isInBackground` flags give you fine-grained control to distinguish between foreground-only tasks (e.g., API polling, UI refreshes) and persistent background tasks (e.g., proactive idle timeout auto-lock, heartbeats).
-*   **Decoupled Logic**: Move complex lifecycle logic (like heartbeats, data refreshes, or security checks) out of your Widgets and into a clean, testable `AppLifecycleEvent` class.
-*   **Graceful Exit Handling**: Override `onExitRequested()` to intercept app shutdown and perform cleanup before exit, such as closing database connections or saving app state.
-*   **Semantic UI Overlays**: Effortlessly toggle "Mask" (privacy) and "Lock" (authorization) states across your entire application.
+### Reusable features
 
----
+- **Screen protection:** `ScreenSecure` holds mask and lock state, and
+  `ScreenProtector` displays the corresponding overlay.
+- **Network probing:** `NetworkProber` checks a configured HTTP endpoint;
+  `RouteSentry` can report whether the current route is monitored.
 
-## 🚀 Quick Start
+These features can be used with the lifecycle framework or independently.
+The framework can also support additional reusable features in your app.
 
-### 1. Define Your Logic (Business + Security)
-Extend `AppLifecycleEvent` to handle periodic tasks and state changes in one place.
+## Built to adapt to your app
+
+Put lifecycle checks, idle-time decisions, and periodic maintenance in one
+handler instead of tying them to visible widgets. The scheduler calls
+`onPeriodic()` at the configured interval while the app process is alive and
+Flutter can execute Dart code, including in the background. If the operating
+system suspends the app, callbacks are delayed until execution is allowed
+again.
+
+The screen-protection building blocks are designed to fit your app's security
+flow. Supply your own authentication UI, connect packages such as
+[`local_auth`](https://pub.dev/packages/local_auth) for biometrics, and use
+platform-specific tools such as
+[`no_screenshot`](https://pub.dev/packages/no_screenshot) for screenshot
+controls.
+
+For network probing, choose an endpoint that represents the service your app
+needs, then coordinate checks with lifecycle and route context according to
+your app's needs.
+
+## Quick start
+
+Add the package to your Flutter project:
+
+```shell
+flutter pub add app_lifecycle_protector
+```
+
+Extend `AppLifecycleEvent`, then initialize the scheduler after Flutter's
+binding is available. This snippet focuses on lifecycle setup; replace
+`MyApp` with your app's root widget:
 
 ```dart
-class MySmartHandler extends AppLifecycleEvent {
-  final ScreenSecure screenSecure;
-  MySmartHandler(this.screenSecure);
+import 'package:flutter/widgets.dart';
+import 'package:app_lifecycle_protector/app_lifecycle_protector.dart';
+
+class AppEvents extends AppLifecycleEvent {
+  @override
+  void onResume() {
+    // Refresh app data.
+  }
 
   @override
   void onPeriodic() {
-    // 1. Security Logic: Active in both foreground and background
-    // Automatically locks if idle timeout is reached, even while backgrounded!
-    if (!AppLifecycleScheduler.instance.isAlive()) {
-      screenSecure.lock(); 
-    }
-
-    // 2. Business Logic: Conditionally run only when the app is in the foreground
     if (isInForeground) {
-      print("Performing resource-friendly foreground API polling...");
+      // Work that should run while the app is visible.
+    } else {
+      // Work that may run while the app is hidden and still executing.
     }
   }
-
-  @override
-  Future<AppExitResponse> onExitRequested() async {
-    print('App Exit...');
-    return AppExitResponse.exit;
-  }
-
 }
-```
 
-### 2. Initialize in the Root Widget
-Initialize the scheduler in your root widget's `initState` to ensure it's ready before the UI builds.
-
-```dart
-@override
-void initState() {
-  super.initState();
-  
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   AppLifecycleScheduler.initialize(
-    interval: const Duration(seconds: 10), // Inspection frequency
-    event: MySmartHandler(screenSecure), // Your custom logic
+    interval: const Duration(seconds: 5),
+    event: AppEvents(),
   );
-
-  // Set idle timeout (e.g., 5 minutes)
-  AppLifecycleScheduler.instance.aliveDuration = const Duration(minutes: 5);
+  runApp(const MyApp()); // Replace with your app's root widget.
 }
 ```
 
-### 3. Wrap Your Application
-Use `ScreenProtector` in your `MaterialApp.builder` to protect all routes.
+`initialize()` creates the global scheduler once. Dispose it with
+`AppLifecycleScheduler.instance.dispose()` when the owning app scope ends.
+The first periodic callback occurs after the configured interval.
 
-```dart
-MaterialApp(
-  builder: (context, child) {
-    return ScreenProtector(
-      screenSecure: screenSecure,
-      lockWidget: MyGlobalLockScreen(),
-      child: child!, // Wraps the entire Navigator stack
-    );
-  },
-  home: const MyHomePage(),
-)
+## Documentation
+
+| Topic | Guides |
+| --- | --- |
+| Framework overview | [English](doc/en/README.md) · [Chinese](doc/zh/README.md) |
+| Screen protection | [English](doc/en/screen_secure.md) · [Chinese](doc/zh/screen_secure.md) |
+| Network probing | [English](doc/en/network_prober.md) · [Chinese](doc/zh/network_prober.md) |
+
+## Example app
+
+The runnable Flutter app in [`example/`](example/) demonstrates the lifecycle
+framework, screen protection, and network probing. Read the
+[example guide](example/example.md) for the walkthrough, source-code map,
+platform network configuration notes, and proxy setup.
+
+```shell
+cd example
+flutter run
 ```
 
----
+The example is intended for learning and experimentation. Feel free to copy
+its source into your own project and adapt it to your app.
 
-## 🛠️ Implementation Patterns
+### Example screens
 
-### Automatic App Lock on Launch
-To ensure the app starts in a protected state, simply call `lock()` during initialization:
+The app starts with a simulated biometric prompt and offers a passphrase
+fallback. These screens demonstrate the sample authentication flow; they are
+not production authentication:
 
-```dart
-@override
-void initState() {
-  super.initState();
-  // ... initialization ...
-  screenSecure.lock(); // Immediate lock
-}
-```
+| Simulated biometric prompt | Passphrase fallback |
+| --- | --- |
+| ![Example biometric prompt](doc/assets/example_biometric_lock.png) | ![Example passphrase fallback](doc/assets/example_passphrase_lock.png) |
 
-### Privacy Masking
-Automatically protect the UI snapshot in the multitasking view.
+After unlocking, the home screen shows the lifecycle framework status and
+entry points to the feature demos.
 
-```dart
-@override
-void onPause() {
-  screenSecure.mask(); // Shows maskWidget
-}
+![Example app home screen](doc/assets/example_home.png)
 
-@override
-void onResume() {
-  screenSecure.unmask(); // Hides maskWidget
-}
-```
+The network probe screen shows endpoint reachability, route monitoring, proxy
+configuration, and platform network guidance:
 
----
+![Network probe screen in the example app](doc/assets/network_probe_demo.png)
 
-## 📄 Documentation & Support
-- **Core Documentation**: [English](doc/en/README.md) | [Chinese](doc/zh/README.md)
-- **Implementation Guide**: [English](doc/en/EXAMPLE.md) | [Chinese](doc/zh/EXAMPLE.md)
-- **Example Code**: [example/](example/)
+## Real-world integration
 
-## Real-world Implementation
+The [ChaBox](https://github.com/huanguan1978/chacrypt/tree/main/chabox)
+desktop application in the ChaCrypt ecosystem uses this package as one part
+of its application security design. Its implementation is a practical
+reference for how to combine lifecycle handling and this package's screen
+protection primitives with app-specific authentication and platform
+capabilities. In particular, explore how a larger application can bring
+together:
 
-`app_lifecycle_protector` is not just a theoretical component; it has been deeply battle-tested in [ChaBox](https://github.com/huanguan1978/chacrypt/tree/main/chabox), the core application of the [ChaCrypt](https://github.com/huanguan1978/chacrypt) ecosystem.
+- access control when the app launches and after a period of inactivity;
+- user-activity tracking to support idle-timeout decisions;
+- lifecycle-triggered masking to reduce exposure when switching away from
+  the app;
+- biometric or passphrase authentication flows; and
+- platform-specific screenshot and recording protections.
 
-**ChaCrypt** is an offline file encryption/decryption ecosystem based on the `ChaCha20-Poly1305` standard, and **ChaBox** is its graphical offline file security workstation. In ChaBox, we utilize this component to build a comprehensive **Active Defense** system:
+The package provides reusable lifecycle and UI-protection building blocks;
+authentication and operating-system-level capture protections come from the
+app's own logic and platform integrations. Explore the
+[ChaCrypt repository](https://github.com/huanguan1978/chacrypt) to study how
+these pieces fit into a real application.
 
-*   **App Lock**: Controls access after launch, ensuring the app can only be used after your authorization.
-*   **Idle Lock**: Automatically triggers a lock if the app remains inactive for a period after login.
-*   **Anti-Screenshot/Recording**: Provides software-level protection against other malicious apps on the same device capturing or recording the screen.
-*   **Screen Masking**: Triggers a privacy mask during app switching (mobile) to prevent sensitive information leakage.
+## Support
 
-If you are looking for how to integrate these security features into a complex, production-grade application, ChaBox serves as an excellent reference. Visit the [ChaCrypt GitHub repository](https://github.com/huanguan1978/chacrypt) to learn more.
-
-### Support the Project 💖
-
-If you find this package useful and would like to see it continue to improve and evolve, please consider showing your support:
-
-- ⭐ **Star the Repo**: Give it a **Star** on GitHub or a **Like** on pub.dev.
-- ☕ **Support the Developer (Global)**: Support via [GitHub Sponsors](https://github.com/sponsors/huanguan1978) or [Buy Me a Coffee](https://buymeacoffee.com/huanguan1978).
-- 🐼 **Support via Ifdian (Mainland China)**: Users in China can also show support via [Ifdian](https://ifdian.net/a/huanguan1978).
-
-*Thank you for your support, which is a vital boost that keeps me focused on the project's continuous iteration; because of you, more people can benefit from this tool much sooner.*
+If you find this package useful, consider starring the
+[GitHub repository](https://github.com/huanguan1978/app_lifecycle_protector)
+or liking it on [pub.dev](https://pub.dev/packages/app_lifecycle_protector).
+You can also support the developer through
+[GitHub Sponsors](https://github.com/sponsors/huanguan1978),
+[Buy Me a Coffee](https://buymeacoffee.com/huanguan1978), or
+[Ifdian](https://ifdian.net/a/huanguan1978).
 
 ## License
-MIT License.
+
+MIT License. See [LICENSE](LICENSE).

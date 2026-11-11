@@ -1,6 +1,6 @@
-# App Lifecycle Protector 综合示例 (中文版)
+# 屏幕保护：ScreenSecure 与 ScreenProtector
 
-本示例展示了如何集成 `app_lifecycle_protector` 以实现一个具备**全生命周期监听**、**切屏隐私保护**以及**闲置超时锁屏**功能的高安全性应用。
+本文详细介绍如何使用 `ScreenSecure` 管理遮罩与锁定状态，并用 `ScreenProtector` 将状态呈现到 Flutter 界面。示例进一步演示如何结合生命周期事件、用户交互追踪和认证界面；认证逻辑需要由应用自行接入。
 
 ## 💡 核心实现思路
 
@@ -27,13 +27,19 @@ class MySecurityHandler extends AppLifecycleEvent {
   MySecurityHandler(this.screenSecure);
 
   @override
+  void initialize() {
+    super.initialize();
+    AppLifecycleScheduler.instance.updateAliveStatus();
+  }
+
+  @override
   void onPeriodic() {
-    // 【全周期巡检】前后台持续运行（由调度器按设定周期触发）
+    // 由调度器按设定周期触发；应用在后台时也可能被操作系统挂起
     final scheduler = AppLifecycleScheduler.instance;
-    
-    // 如果用户闲置时间超过预设时长（例如 3 分钟），自动锁屏（后台超时亦可主动加锁）
+
+    // 如果用户闲置时间超过配置的 aliveDuration，自动锁屏
     if (!scheduler.isAlive()) {
-      screenSecure.lock(); 
+      screenSecure.lock();
     }
 
     // 结合 isInForeground / isInBackground，按需执行前后台特定逻辑
@@ -68,7 +74,7 @@ class MockBiometricValidator implements BiometricValidator {
   Future<bool> authenticate({required String localizedReason}) async {
     // 模拟认证过程
     await Future.delayed(const Duration(seconds: 1));
-    return true; 
+    return true;
   }
 }
 ```
@@ -104,18 +110,27 @@ class _MyAppState extends State<MyApp> {
 
     // 1. 初始化生命周期调度器
     AppLifecycleScheduler.initialize(
-      interval: const Duration(seconds: 10), // 每 10 秒巡检一次
+      interval: const Duration(seconds: 3), // 每 3 秒巡检一次
       event: MySecurityHandler(screenSecure),
     );
 
     // 2. 监听硬件键盘交互（全局）
-    HardwareKeyboard.instance.addHandler((event) {
-      AppLifecycleScheduler.instance.updateAliveStatus();
-      return false; // 事件继续分发
-    });
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
 
     // 3. 设置闲置超时时长为 5 分钟
     AppLifecycleScheduler.instance.aliveDuration = const Duration(minutes: 5);
+  }
+
+  bool _handleKeyEvent(KeyEvent event) {
+    AppLifecycleScheduler.instance.updateAliveStatus();
+    return false;
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    AppLifecycleScheduler.instance.dispose();
+    super.dispose();
   }
 
   @override
@@ -139,7 +154,7 @@ class _MyAppState extends State<MyApp> {
               validator: MockBiometricValidator(),
               onUnlocked: onUnlocked,
               fallback: PassphraseLockScreen(
-                onValidate: (pw, _) => pw == "123456" ? null : "密匙错误",
+                onValidate: (pw, _) => pw == "123456" ? null : "密码错误",
                 onUnlocked: onUnlocked,
               ),
             );
@@ -197,18 +212,7 @@ screenSecure.lock();
 *   **默认遮罩**：深灰色背景 + 隐私图标。
 *   **默认锁屏**：黑色背景 + "App Locked" 文字。
 
-### 建议配合的辅助包
-*   **[local_auth](https://pub.dev/packages/local_auth)**: 用于真实的生物识别。
-*   **[no_screenshot](https://pub.dev/packages/no_screenshot)**: 禁止系统层级的截屏和录屏，与本包的遮罩功能互补。
-��“安全退出”），你可以直接调用：
-```dart
-screenSecure.lock();
-```
-
-### 如何自定义保护界面？
-`ScreenProtector` 提供了 `maskWidget` 和 `lockWidget` 槽位。如果你不提供，它将使用内置的默认样式：
-*   **默认遮罩**：深灰色背景 + 隐私图标。
-*   **默认锁屏**：黑色背景 + "App Locked" 文字。
+`ScreenProtector` 是 Flutter 界面层的遮罩与锁屏展示，不负责身份认证，也不等同于系统级截屏或录屏防护；需要这些能力时，应由应用另行接入认证和平台能力。
 
 ### 建议配合的辅助包
 *   **[local_auth](https://pub.dev/packages/local_auth)**: 用于真实的生物识别。
