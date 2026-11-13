@@ -1,8 +1,8 @@
 # App Lifecycle Protector
 
-`app_lifecycle_protector` is a framework for coordinating Flutter application
-lifecycle events and periodic tasks. It also provides two reusable features
-built on that framework: screen protection and network probing.
+`app_lifecycle_protector` provides a lifecycle framework and three reusable
+features built on top of it: interval task management, screen protection, and
+network probing.
 
 ## What the framework provides
 
@@ -64,27 +64,40 @@ Call `initializeLifecycle()` after the Flutter binding has been initialized,
 for example before `runApp()` or from the root widget's `initState()`. The
 first `onPeriodic()` callback runs after one `interval` has elapsed.
 
-## Two reusable features
+`AppLifecycleEvent` also provides `onIdle()`, which is dispatched once after
+the configured `aliveDuration` passes without recorded user interaction.
+Call `updateAliveStatus()` whenever the user interacts with the UI to restart
+the idle timer. The event is independent of foreground/background state and is
+checked on the next periodic heartbeat.
 
-To protect sensitive screens when the app is backgrounded or the user is
-idle, use `ScreenSecure` to manage masking and lock state, then
-`ScreenProtector` to display the corresponding UI. Your app supplies the
-authentication flow, such as an existing passcode or biometric flow. See the
+## Three reusable features
+
+For tasks that should run at intervals while a client app is active, use
+`AppIntervalTaskManager`. It does not create a heartbeat; drive it from
+`onPeriodic()` or your own timer. New tasks run at a heartbeat check, then
+become eligible again based on the time of their last successful run and the
+configured interval. Snapshot import and export are explicit, and the app is
+responsible for persistence. For details, see the [interval task management
+guide](interval_task_manager.md).
+
+To protect sensitive screens, use `ScreenSecure` to manage masking and lock
+state, then `ScreenProtector` to display the corresponding UI. Your app
+supplies the authentication flow. See the
 [screen protection guide](screen_secure.md).
 
-To check whether a server endpoint is reachable, use `NetworkProber` to send
-an HTTP probe and listen for its result. It does not poll on its own; the
-caller chooses when to probe. Use `RouteSentry` when probing should be limited
-to selected routes. See the [network probing guide](network_prober.md).
+To check whether a server endpoint is reachable, use `NetworkProber` and
+optionally `RouteSentry` to scope checks to selected routes. The caller chooses
+when to probe. See the [network probing guide](network_prober.md).
 
-These features can be combined with the lifecycle framework or used
-independently as needed. You can also implement session-expiration checks,
-business heartbeats, and other logic in your own event handler.
+All three features can be combined with the lifecycle framework. Screen
+protection and network probing can also be used independently. The lifecycle
+framework itself can handle session-expiration checks and other app-level
+lifecycle logic.
 
 ## Run and explore the example
 
 Run the Flutter app in the `example/` directory to try the lifecycle
-framework, screen protection, and network probing:
+framework, interval task management, screen protection, and network probing:
 
 ```shell
 cd example
@@ -107,17 +120,20 @@ should not be treated as interchangeable.
 
 `AppLifecycleScheduler` is a global singleton, and `initialize()` creates it
 only once. To release it, call
-`AppLifecycleScheduler.instance.dispose()`. Configure idle timeouts with
-`aliveDuration`; call `updateAliveStatus()` at app startup and in response to
-user interaction, then use `isAlive()` to check activity. Before an active
-time has been recorded, `isAlive()` returns `false`.
+`AppLifecycleScheduler.instance.dispose()` when it is no longer needed. Set
+the idle timeout with `aliveDuration`. Call `updateAliveStatus()` whenever
+the user interacts with the UI to restart the timer; `onIdle()` is dispatched
+when the timeout elapses without interaction. Use `isAlive()` to check
+whether the user is still considered active. It returns `false` until user
+activity has been recorded.
 
 ## AI coding agent skills
 
-This package includes skills for the lifecycle framework, screen protection,
-and network probing. After adding the package dependency and running
-`flutter pub get`, run this command from the root of your Flutter project to
-install the skills for GitHub Copilot in VS Code:
+This package includes separate skills for lifecycle handling and interval
+task management, plus skills for screen protection and network probing.
+After adding the package
+dependency and running `flutter pub get`, run this command from the root of
+your Flutter project to install the skills for GitHub Copilot in VS Code:
 
 ```shell
 dart run skills@ get -p app_lifecycle_protector --agent copilot
@@ -129,8 +145,8 @@ specify `--agent copilot`. Adding the package dependency or running `pub get`
 does not install the skills automatically.
 
 The `-p app_lifecycle_protector` option limits discovery to this package, but
-the command still prompts you to select skills. To install all three skills
-from this package, select all three in the prompt (for example, press
+the command still prompts you to select skills. To install all four skills
+from this package, select all four in the prompt (for example, press
 `Ctrl+A`, then `Enter`). Avoid `--all` if you only want this package's skills:
 it installs all available skills from all dependencies and configured sources.
 

@@ -24,6 +24,7 @@ class _DemoAppState extends State<DemoApp> {
   late final ScreenSecureDemo _screenSecureDemo;
   late final RouteSentry _routeSentry;
   late final NetworkProbeDemo _networkProbeDemo;
+  late final AppIntervalTaskManager _intervalTaskManager;
 
   @override
   void initState() {
@@ -38,12 +39,27 @@ class _DemoAppState extends State<DemoApp> {
       routeSentry: _routeSentry,
       onLog: _logs.add,
     );
+    _intervalTaskManager = AppIntervalTaskManager(
+      logger: Logger('ExampleTasks'),
+      onError: (failure) {
+        _logs.add(
+          '[Task] ${failure.taskId} failed: ${failure.error}',
+        );
+      },
+    )..registerTask(
+        id: 'demo-maintenance',
+        interval: const Duration(seconds: 15),
+        callback: () {
+          _logs.add('[Task] Demo maintenance ran.');
+        },
+      );
 
     AppLifecycleScheduler.initialize(
       interval: const Duration(seconds: 5),
       event: DemoLifecycleEvent(
         screenSecureDemo: _screenSecureDemo,
         networkProbeDemo: _networkProbeDemo,
+        intervalTaskManager: _intervalTaskManager,
         onLog: _logs.add,
       ),
       logger: Logger('ExampleScheduler'),

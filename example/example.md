@@ -4,7 +4,8 @@ This runnable Flutter app demonstrates two layers:
 
 1. The lifecycle framework: `AppLifecycleEvent` and
    `AppLifecycleScheduler`.
-2. Features built with the framework: screen protection and network probing.
+2. Reusable features built on the framework: interval task management, screen
+   protection, and network probing.
 
 The source is split by responsibility so you can follow how the framework is
 connected to feature logic and then to the UI.
@@ -24,8 +25,9 @@ the simulated biometric check, then enter `123456`.
 
 The app creates **one** `AppLifecycleScheduler` with one
 `DemoLifecycleEvent`. The event handler receives lifecycle callbacks and
-periodic ticks, then coordinates both feature demos. Each feature does not
-create its own scheduler.
+periodic ticks, then coordinates the feature instances injected into it. The
+`AppIntervalTaskManager` remains independent; `DemoLifecycleEvent` explicitly
+calls its `onPeriodic()` from the lifecycle heartbeat.
 
 ```dart
 AppLifecycleScheduler.initialize(
@@ -33,6 +35,7 @@ AppLifecycleScheduler.initialize(
   event: DemoLifecycleEvent(
     screenSecureDemo: screenSecureDemo,
     networkProbeDemo: networkProbeDemo,
+    intervalTaskManager: intervalTaskManager,
     onLog: logs.add,
   ),
 );
@@ -44,14 +47,25 @@ This shows the division of responsibility:
   such as `onResume`, `onPause`, and periodic `onPeriodic`.
 - `AppLifecycleScheduler` listens to lifecycle changes and calls the handler
   on the configured interval.
-- The feature classes decide what their feature should do when the handler
-  forwards an event or tick.
+- Feature classes decide what their feature should do when the handler
+  forwards an event or tick. The task manager has no scheduler dependency; the
+  app chooses to drive it from `onPeriodic()`.
 
 The example's scheduler interval is 5 seconds and its idle timeout is 60
 seconds so the behavior is easy to observe. These are demo settings, not
 recommended production values.
 
 ## What you can try
+
+### Interval task management
+
+The demo registers an in-memory maintenance task with a 15-second interval.
+The lifecycle handler drives the independent `AppIntervalTaskManager` on each
+periodic callback and writes task execution and error messages to the demo log.
+This illustrates task registration and heartbeat composition; it does not
+persist task snapshots. For a beginner walkthrough from initial setup through
+task controls and explicit snapshot persistence, see the
+[interval task management guide](../doc/en/interval_task_manager.md).
 
 ### Screen protection
 
@@ -131,7 +145,8 @@ proxy-only or traffic-tunneling setting.
 | --- | --- | --- |
 | App composition | [`lib/app/demo_app.dart`](lib/app/demo_app.dart) | Creates feature instances and the single scheduler; registers routes and disposes resources |
 | Route names | [`lib/app/demo_routes.dart`](lib/app/demo_routes.dart) | Defines the named routes used by the app and `RouteSentry` |
-| Framework demonstration | [`lib/framework/demo_lifecycle_event.dart`](lib/framework/demo_lifecycle_event.dart) | Logs framework events and forwards lifecycle work to feature demos |
+| Framework and task integration | [`lib/framework/demo_lifecycle_event.dart`](lib/framework/demo_lifecycle_event.dart) | Logs framework events and drives the interval task manager from `onPeriodic()` |
+| Interval-task demo setup | [`lib/app/demo_app.dart`](lib/app/demo_app.dart) | Registers the in-memory maintenance task and configures its error reporting |
 | Screen-protection feature | [`lib/features/screen_secure/screen_secure_demo.dart`](lib/features/screen_secure/screen_secure_demo.dart) | Implements the demo's lock, mask, idle timeout, and mock validator |
 | Network-probing feature | [`lib/features/network_prober/network_probe_demo.dart`](lib/features/network_prober/network_probe_demo.dart) | Configures the probe, route-aware schedule, status, and proxy |
 | UI | [`lib/pages/`](lib/pages/) | Presents the home, screen-protection, and network-probe pages |

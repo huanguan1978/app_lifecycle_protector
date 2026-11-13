@@ -1,3 +1,7 @@
+## 0.0.7
+
+* Added lightweight interval task management with relative-time scheduling, task controls, and explicit snapshots.
+
 ## 0.0.6
 
 * Restructured the package documentation and refactored the example app.

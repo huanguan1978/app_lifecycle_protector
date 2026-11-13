@@ -14,6 +14,12 @@ abstract class AppLifecycleEvent {
   bool get isInBackground => !_isInForeground;
 
   void onPeriodic() {}
+
+  /// Called once after the configured user-interaction idle timeout.
+  ///
+  /// The timeout is independent of foreground/background state and is checked
+  /// on the scheduler's periodic heartbeat.
+  void onIdle() {}
   void initialize() {}
   void dispose() {}
 
@@ -41,8 +47,11 @@ class AppLifecycleScheduler {
   final Logger? _logger;
   AppLifecycleListener? _listener;
 
+  /// User inactivity timeout and default duration used by [isAlive].
   Duration aliveDuration = const Duration(minutes: 3);
   DateTime? _aliveAt;
+  DateTime _idleSince = DateTime.now();
+  bool _idleEventDispatched = false;
 
   AppLifecycleScheduler._internal({
     required Duration interval,
@@ -63,32 +72,37 @@ class AppLifecycleScheduler {
   void _initListener() {
     _listener = AppLifecycleListener(
       onShow: () {
-        _logger?.finest('AppLifecycle: onShow. Ensuring periodic timer is active.');
+        _logger?.finest(
+            'AppLifecycle: onShow. Ensuring periodic timer is active.');
         _event._isInForeground = true;
         _start();
         _event.onShow();
       },
       onHide: () {
-        _logger?.finest('AppLifecycle: onHide. Keeping periodic timer running in background.');
+        _logger?.finest(
+            'AppLifecycle: onHide. Keeping periodic timer running in background.');
         _event._isInForeground = false;
         // Keep the timer running while the app is in background until suspended or terminated.
         _event.onHide();
       },
       onDetach: () {
-        _logger?.finest('AppLifecycle: onDetach. Stopping periodic timer on app termination.');
+        _logger?.finest(
+            'AppLifecycle: onDetach. Stopping periodic timer on app termination.');
         _stop();
         _event.onDetach();
       },
       onInactive: _event.onInactive,
       onPause: _event.onPause,
       onResume: () {
-        _logger?.finest('AppLifecycle: onResume. Ensuring periodic timer is active.');
+        _logger?.finest(
+            'AppLifecycle: onResume. Ensuring periodic timer is active.');
         _start();
         _event.onResume();
       },
       onRestart: _event.onRestart,
       onExitRequested: () async {
-        _logger?.finest('AppLifecycle: onExitRequested. Stopping periodic timer.');
+        _logger
+            ?.finest('AppLifecycle: onExitRequested. Stopping periodic timer.');
         _stop();
         return _event.onExitRequested();
       },
@@ -134,8 +148,24 @@ class AppLifecycleScheduler {
   void _start() {
     if (_timer == null || !_timer!.isActive) {
       _logger?.finest('Periodic task started.');
-      _timer = Timer.periodic(_interval, (_) => _event.onPeriodic());
+      _timer = Timer.periodic(_interval, (_) => _dispatchPeriodic());
     }
+  }
+
+  void _dispatchPeriodic() {
+    _dispatchIdleIfNeeded();
+    _event.onPeriodic();
+  }
+
+  void _dispatchIdleIfNeeded() {
+    if (_idleEventDispatched ||
+        DateTime.now().difference(_idleSince) < aliveDuration) {
+      return;
+    }
+
+    _idleEventDispatched = true;
+    _logger?.finest('AppLifecycle: onIdle. No user interaction timed out.');
+    _event.onIdle();
   }
 
   void _stop() {
@@ -148,7 +178,13 @@ class AppLifecycleScheduler {
 
   bool timerIsActive() => _timer?.isActive ?? false;
 
-  DateTime aliveAtNow() => _aliveAt = DateTime.now();
+  DateTime aliveAtNow() {
+    final now = DateTime.now();
+    _aliveAt = now;
+    _idleSince = now;
+    _idleEventDispatched = false;
+    return now;
+  }
 
   bool isAlive([Duration? duration]) {
     final lastAlive = _aliveAt;

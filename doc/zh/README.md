@@ -1,6 +1,6 @@
 # App Lifecycle Protector（中文版）
 
-`app_lifecycle_protector` 是一个帮助 Flutter 应用集中处理生命周期事件和定时任务的框架，并提供屏幕保护与网络探测两种可复用功能。
+`app_lifecycle_protector` 提供一个用于集中处理应用生命周期的框架，以及基于该框架实现的三种可复用功能：周期任务管理、屏幕保护和网络探测。
 
 ## 核心价值
 
@@ -45,17 +45,21 @@ void initializeLifecycle() {
 
 在 Flutter binding 初始化之后调用 `initializeLifecycle()`，例如在 `runApp` 前或根组件的 `initState` 中。第一次 `onPeriodic()` 会在一个 `interval` 过去后触发。
 
-## 两个可复用功能
+`AppLifecycleEvent` 还提供 `onIdle()`：在 `aliveDuration` 内没有记录到用户交互后，于下一次周期心跳派发一次。调用 `updateAliveStatus()` 记录用户交互并开始新一轮空闲计时。此事件与应用前后台状态无关。
+
+## 三个可复用功能
+
+需要在客户端应用运行期间按间隔执行任务时，可用 `AppIntervalTaskManager`。它不创建心跳，可由生命周期事件的 `onPeriodic()` 或应用自己的定时器驱动；新任务在心跳检查时运行，之后按上次成功运行时间和设定间隔判断是否再次运行。任务快照由应用显式导入/导出并自行保存。详见[周期任务管理指南](interval_task_manager.md)。
 
 需要在切换应用或用户闲置时保护敏感界面时，可用 `ScreenSecure` 管理遮罩与锁定状态，再由 `ScreenProtector` 显示自定义保护界面。认证方式由应用决定，可接入已有的密码或生物识别流程。详见[屏幕保护功能](screen_secure.md)。
 
 需要检查某个服务端点是否可达时，可用 `NetworkProber` 发起 HTTP 探测并监听结果。它不自行定时轮询，调用方决定何时探测；需要限定在特定路由时，可配合 `RouteSentry`。详见[网络探针功能](network_prober.md)。
 
-这两项功能可以与生命周期框架组合，也可以按需独立使用。你也可以在自己的事件处理器中实现会话过期检查、业务心跳等逻辑。
+这三项功能可以与生命周期框架组合；屏幕保护和网络探针也可按需独立使用。生命周期框架自身仍可用于会话过期检查和其他应用级生命周期逻辑。
 
 ## 运行和探索示例
 
-你可以运行 `example/` 目录中的 Flutter 示例应用，实际体验生命周期框架、屏幕保护和网络探针：
+你可以运行 `example/` 目录中的 Flutter 示例应用，实际体验生命周期框架、周期任务管理、屏幕保护和网络探针：
 
 ```shell
 cd example
@@ -68,11 +72,11 @@ flutter run
 
 本包依赖 Flutter SDK 和 `logging`，不依赖平台插件或特定状态管理方案。除 `onResume()` 外，`AppLifecycleEvent` 还提供显示、隐藏、暂停、退出等事件回调；它们对应不同通知，不应视为同义方法。
 
-`AppLifecycleScheduler` 是全局单例，`initialize()` 只会创建一次；需要释放时调用 `AppLifecycleScheduler.instance.dispose()`。空闲超时可通过 `aliveDuration` 设置时长，在应用启动和用户交互时调用 `updateAliveStatus()`，再用 `isAlive()` 检查。首次记录活跃时间之前，`isAlive()` 返回 `false`。
+`AppLifecycleScheduler` 是全局单例，只需初始化一次；不再使用时调用 `AppLifecycleScheduler.instance.dispose()` 释放。通过 `aliveDuration` 设置空闲时长；用户每次操作界面时调用 `updateAliveStatus()` 重新计时，超过该时长未操作时会触发 `onIdle()`。`isAlive()` 可查询用户是否仍处于活跃状态；首次记录操作前返回 `false`。
 
 ## AI 编码助手 skills
 
-本包提供生命周期框架、屏幕保护和网络探测相关的 skills。在 Flutter 项目中添加本包依赖并运行 `flutter pub get` 后，从项目根目录运行以下命令，可为 VS Code 中的 GitHub Copilot 发现并选择安装：
+本包提供生命周期处理（包括周期任务集成）、屏幕保护和网络探测相关的 skills。在 Flutter 项目中添加本包依赖并运行 `flutter pub get` 后，从项目根目录运行以下命令，可为 VS Code 中的 GitHub Copilot 发现并选择安装：
 
 ```shell
 dart run skills@ get -p app_lifecycle_protector --agent copilot
@@ -80,7 +84,7 @@ dart run skills@ get -p app_lifecycle_protector --agent copilot
 
 CLI 会将 skills 安装到 `.github/skills/`，这是 VS Code Copilot 的项目级 skills 目录。`skills` CLI 不会自动检测 Copilot，因此需要显式指定 `--agent copilot`。仅添加依赖或运行 `pub get` 不会自动安装 skills。
 
-`-p app_lifecycle_protector` 会将发现范围限定为本包，但命令仍会显示交互式选择列表。要安装本包的全部三个 skills，请在列表中全选（例如按 `Ctrl+A`，再按 `Enter`）。如果只想安装本包的 skills，不要加 `--all`；该选项会安装所有依赖和已配置来源中可用的 skills。
+`-p app_lifecycle_protector` 会将发现范围限定为本包，但命令仍会显示交互式选择列表。要安装本包的全部四个 skills，请在列表中全选（例如按 `Ctrl+A`，再按 `Enter`）。如果只想安装本包的 skills，不要加 `--all`；该选项会安装所有依赖和已配置来源中可用的 skills。
 
 安装后，在 VS Code 中打开项目并新建 Copilot Chat 会话。skills 应可在 `/` 菜单中找到；你可以直接调用某个 skill，也可以让 Copilot 根据请求尝试选择。能发现 skill 不代表每次相关请求都会自动触发它。
 

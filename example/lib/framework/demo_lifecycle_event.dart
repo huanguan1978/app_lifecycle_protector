@@ -7,11 +7,13 @@ class DemoLifecycleEvent extends AppLifecycleEvent {
   DemoLifecycleEvent({
     required this.screenSecureDemo,
     required this.networkProbeDemo,
+    required this.intervalTaskManager,
     required this.onLog,
   });
 
   final ScreenSecureDemo screenSecureDemo;
   final NetworkProbeDemo networkProbeDemo;
+  final AppIntervalTaskManager intervalTaskManager;
   final void Function(String message) onLog;
 
   @override
@@ -23,6 +25,7 @@ class DemoLifecycleEvent extends AppLifecycleEvent {
 
   @override
   void onPeriodic() {
+    intervalTaskManager.onPeriodic();
     final scheduler = AppLifecycleScheduler.instance;
     final alive = scheduler.isAlive();
     final foreground = isInForeground;
@@ -34,6 +37,11 @@ class DemoLifecycleEvent extends AppLifecycleEvent {
 
     screenSecureDemo.onPeriodic(isAlive: alive);
     networkProbeDemo.onPeriodic(isInForeground: foreground);
+  }
+
+  @override
+  void onIdle() {
+    onLog('[Framework] onIdle: no user interaction timeout.');
   }
 
   @override

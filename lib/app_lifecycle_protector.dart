@@ -1,6 +1,7 @@
 library;
 
 export 'src/lifecycle_scheduler.dart';
+export 'src/interval_task_manager.dart';
 export 'src/network_prober.dart';
 export 'src/route_sentry.dart';
 export 'src/screen_protector.dart';

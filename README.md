@@ -1,7 +1,8 @@
 # App Lifecycle Protector
 
-A Flutter lifecycle framework for centralizing app lifecycle events and
-periodic tasks, with reusable screen-protection and network-probing features.
+A Flutter lifecycle framework for centralizing app lifecycle events, with
+reusable interval-task management, screen-protection, and network-probing
+features.
 
 [![Pub Version](https://img.shields.io/pub/v/app_lifecycle_protector.svg)](https://pub.dev/packages/app_lifecycle_protector)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
@@ -10,7 +11,7 @@ periodic tasks, with reusable screen-protection and network-probing features.
 
 ## What this package provides
 
-The package has two layers: a lifecycle framework and reusable features built
+The package provides a lifecycle framework and three reusable features built
 on top of it.
 
 ### Lifecycle framework
@@ -21,13 +22,19 @@ on top of it.
 
 ### Reusable features
 
+- **Interval task management:** `AppIntervalTaskManager` manages client-side
+  tasks triggered by heartbeat checks. New tasks run at the next check; later
+  runs follow the interval measured from the last successful completion. The
+  app supplies the heartbeat and handles snapshot persistence. See the
+  [interval task guide](doc/en/interval_task_manager.md).
 - **Screen protection:** `ScreenSecure` holds mask and lock state, and
   `ScreenProtector` displays the corresponding overlay.
 - **Network probing:** `NetworkProber` checks a configured HTTP endpoint;
   `RouteSentry` can report whether the current route is monitored.
 
-These features can be used with the lifecycle framework or independently.
-The framework can also support additional reusable features in your app.
+All three features can be combined with the lifecycle framework. Interval
+task management can also be driven by an app-provided heartbeat, while screen
+protection and network probing can be used independently.
 
 ## Built to adapt to your app
 
@@ -100,13 +107,15 @@ The first periodic callback occurs after the configured interval.
 | Topic | Guides |
 | --- | --- |
 | Framework overview | [English](doc/en/README.md) · [Chinese](doc/zh/README.md) |
+| Interval task management | [English](doc/en/interval_task_manager.md) · [Chinese](doc/zh/interval_task_manager.md) |
 | Screen protection | [English](doc/en/screen_secure.md) · [Chinese](doc/zh/screen_secure.md) |
 | Network probing | [English](doc/en/network_prober.md) · [Chinese](doc/zh/network_prober.md) |
 
 ## AI coding agent skills
 
-This package ships skills for the lifecycle framework, screen protection, and
-network probing. After adding this package as a dependency and running
+This package ships skills for lifecycle handling (including interval-task
+integration), screen protection, and network probing. After adding this
+package as a dependency and running
 `flutter pub get`, install the skills you want from the root of your Flutter
 project:
 
@@ -121,8 +130,8 @@ Adding the Flutter dependency or running `pub get` does not install or enable
 skills automatically.
 
 The `-p app_lifecycle_protector` option limits discovery to this package, but
-the command still prompts you to choose skills. To install all three skills
-from this package, select all three in the prompt (for example, press
+the command still prompts you to choose skills. To install all four skills
+from this package, select all four in the prompt (for example, press
 `Ctrl+A`, then `Enter`). Avoid `--all` if you only want this package's skills:
 that option installs all available skills from all dependencies and configured
 sources.
@@ -153,7 +162,8 @@ for the current agent list and options.
 ## Example app
 
 The runnable Flutter app in [`example/`](example/) demonstrates the lifecycle
-framework, screen protection, and network probing. Read the
+framework and its three reusable features: interval task management, screen
+protection, and network probing. Read the
 [example guide](example/example.md) for the walkthrough, source-code map,
 platform network configuration notes, and proxy setup.
 
