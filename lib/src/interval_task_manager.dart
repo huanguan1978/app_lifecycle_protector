@@ -175,6 +175,18 @@ class AppIntervalTaskManager {
       .._isPaused = false;
   }
 
+  /// Runs [id] immediately, bypassing its interval check.
+  ///
+  /// Paused or stopped tasks are not run, and an already running task is not
+  /// started again. A successful manual run updates the last success time.
+  void runTaskNow(String id) {
+    final task = _requireTask(id);
+    if (task._isStopped || task._isPaused || _runningTaskIds.contains(id)) {
+      return;
+    }
+    _startTask(task);
+  }
+
   /// Stops [id]; the stopped state is included in exported snapshots.
   void stopTask(String id) {
     final task = _requireTask(id);
@@ -237,10 +249,7 @@ class AppIntervalTaskManager {
           !_isDue(task, now)) {
         continue;
       }
-
-      _runningTaskIds.add(task.id);
-      task._isRunning = true;
-      unawaited(_runTask(task, task._callback));
+      _startTask(task);
     }
   }
 
@@ -363,6 +372,12 @@ class AppIntervalTaskManager {
     final lastSuccessTime = task._lastSuccessTime;
     return lastSuccessTime == null ||
         now.difference(lastSuccessTime) >= task.interval;
+  }
+
+  void _startTask(IntervalTask task) {
+    _runningTaskIds.add(task.id);
+    task._isRunning = true;
+    unawaited(_runTask(task, task._callback));
   }
 
   Future<void> _runTask(

@@ -111,6 +111,17 @@ tasks.stopTask('refresh-cache'); // Stop
 tasks.removeTask('refresh-cache'); // Remove
 ```
 
+To trigger a task manually—for example, while debugging or before its next
+interval elapses—run it by ID:
+
+```dart
+tasks.runTaskNow('refresh-cache');
+```
+
+This bypasses the interval check, but does not run paused or stopped tasks and
+does not overlap an existing run. On success, the task's last-success time is
+updated, so its next interval is measured from that completion.
+
 Pausing is temporary; the stopped state is included in task snapshots. After
 a task is paused, stopped, or removed, later heartbeats will not start it
 again. A callback that has already started continues until it completes.

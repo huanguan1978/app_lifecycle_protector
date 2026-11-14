@@ -74,6 +74,68 @@ void main() {
       expect(manager.task('refresh')!.status, IntervalTaskStatus.waiting);
     });
 
+    test('runs a task immediately without waiting for its interval', () async {
+      var calls = 0;
+      manager.registerTask(
+        id: 'refresh',
+        interval: const Duration(days: 1),
+        callback: (_) => calls++,
+      );
+      manager.onPeriodic();
+      await _flushAsyncWork();
+
+      now = now.add(const Duration(seconds: 1));
+      manager.runTaskNow('refresh');
+      await _flushAsyncWork();
+
+      expect(calls, 2);
+      expect(manager.task('refresh')!.lastSuccessTime, now);
+    });
+
+    test('does not run paused or stopped tasks manually', () async {
+      var calls = 0;
+      manager.registerTask(
+        id: 'refresh',
+        interval: const Duration(days: 1),
+        callback: (_) => calls++,
+      );
+
+      manager.pauseTask('refresh');
+      manager.runTaskNow('refresh');
+      expect(manager.task('refresh')!.status, IntervalTaskStatus.paused);
+
+      manager.startTask('refresh');
+      manager.runTaskNow('refresh');
+      await _flushAsyncWork();
+      expect(calls, 1);
+
+      manager.stopTask('refresh');
+      manager.runTaskNow('refresh');
+      expect(manager.task('refresh')!.status, IntervalTaskStatus.stopped);
+      expect(calls, 1);
+    });
+
+    test('does not overlap a manual run', () async {
+      final completion = Completer<void>();
+      var calls = 0;
+      manager.registerTask(
+        id: 'refresh',
+        interval: const Duration(days: 1),
+        callback: (_) {
+          calls++;
+          return completion.future;
+        },
+      );
+
+      manager.runTaskNow('refresh');
+      manager.runTaskNow('refresh');
+      expect(calls, 1);
+
+      completion.complete();
+      await _flushAsyncWork();
+      expect(manager.task('refresh')!.status, IntervalTaskStatus.waiting);
+    });
+
     test('updates interval relative to the last success time', () async {
       var calls = 0;
       manager.registerTask(

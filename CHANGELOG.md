@@ -3,6 +3,8 @@
 * Added lightweight interval task management with relative-time scheduling, task controls, and explicit snapshots.
 * Enhanced interval task callbacks to receive the registered task ID as a
   `String`; callbacks that do not need it can ignore the argument.
+* Added `runTaskNow` to manually run an eligible task immediately, bypassing its
+  interval check.
 
 ## 0.0.6
 

@@ -85,6 +85,7 @@ tasks.pauseTask('refresh-cache'); // Temporary; not included in snapshots.
 tasks.startTask('refresh-cache'); // Resume or restart.
 tasks.stopTask('refresh-cache'); // Stopped state is included in snapshots.
 tasks.removeTask('refresh-cache');
+tasks.runTaskNow('refresh-cache'); // Bypass the interval; paused/stopped tasks stay inactive.
 ```
 
 These controls prevent a later heartbeat from starting the task; they do not
