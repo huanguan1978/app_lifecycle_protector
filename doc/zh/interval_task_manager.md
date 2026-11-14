@@ -56,10 +56,12 @@ void startAppLifecycle() {
   );
 }
 
-Future<void> refreshCache() async {
-  // 在这里调用应用自己的缓存刷新逻辑。
+Future<void> refreshCache(String taskId) async {
+  // 根据 taskId 获取对应数据，再调用应用自己的缓存刷新逻辑。
 }
 ```
+
+`callback` 必须接收一个 `String` 参数，即注册任务时的 `id`。同一个回调可以注册给不同 ID 和间隔的任务，并根据 ID 读取各自的数据；如果回调不需要 ID，可以用 `callback: (_) => runMaintenance()` 忽略它。
 
 请在 Flutter binding 初始化后调用 `startAppLifecycle()`，例如在 `runApp()` 前。本例中：
 

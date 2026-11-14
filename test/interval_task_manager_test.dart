@@ -18,7 +18,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(minutes: 1),
-        callback: () => calls++,
+        callback: (_) => calls++,
       );
 
       manager.onPeriodic();
@@ -29,13 +29,36 @@ void main() {
       expect(manager.task('refresh')!.status, IntervalTaskStatus.waiting);
     });
 
+    test('passes each task ID to the callback', () async {
+      final taskIds = <String>[];
+      Future<void> processTask(String id) async {
+        taskIds.add(id);
+      }
+
+      manager.registerTask(
+        id: 'customer-42',
+        interval: const Duration(minutes: 5),
+        callback: processTask,
+      );
+      manager.registerTask(
+        id: 'customer-99',
+        interval: const Duration(minutes: 30),
+        callback: processTask,
+      );
+
+      manager.onPeriodic();
+      await _flushAsyncWork();
+
+      expect(taskIds, ['customer-42', 'customer-99']);
+    });
+
     test('does not overlap a running task', () async {
       final completion = Completer<void>();
       var calls = 0;
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 1),
-        callback: () {
+        callback: (_) {
           calls++;
           return completion.future;
         },
@@ -56,7 +79,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 10),
-        callback: () => calls++,
+        callback: (_) => calls++,
       );
 
       manager.onPeriodic();
@@ -80,7 +103,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(minutes: 5),
-        callback: () {},
+        callback: (_) {},
         description: 'Refresh app cache',
         intervalDescription: '5m',
       );
@@ -106,7 +129,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(minutes: 5),
-        callback: () {},
+        callback: (_) {},
         description: 'Refresh app cache',
         intervalDescription: '5m',
       );
@@ -114,7 +137,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(minutes: 10),
-        callback: () {},
+        callback: (_) {},
       );
 
       expect(manager.task('refresh')!.description, '');
@@ -128,7 +151,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 1),
-        callback: () {
+        callback: (_) {
           calls++;
           throw StateError('failed');
         },
@@ -155,7 +178,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 1),
-        callback: () => throw StateError('task failed'),
+        callback: (_) => throw StateError('task failed'),
       );
 
       expect(() => manager.onPeriodic(), returnsNormally);
@@ -167,7 +190,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 1),
-        callback: () {},
+        callback: (_) {},
       );
       manager.pauseTask('refresh');
       expect(manager.task('refresh')!.status, IntervalTaskStatus.paused);
@@ -177,7 +200,7 @@ void main() {
       restored.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 2),
-        callback: () {},
+        callback: (_) {},
       );
       restored.importSnapshot(snapshot);
       expect(restored.task('refresh')!.status, IntervalTaskStatus.waiting);
@@ -188,7 +211,7 @@ void main() {
       nextRestore.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 2),
-        callback: () {},
+        callback: (_) {},
       );
       nextRestore.importSnapshot(stoppedSnapshot);
       expect(nextRestore.task('refresh')!.status, IntervalTaskStatus.stopped);
@@ -199,7 +222,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 1),
-        callback: () {},
+        callback: (_) {},
       );
       manager.onPeriodic();
       await _flushAsyncWork();
@@ -226,7 +249,7 @@ void main() {
       restored.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 2),
-        callback: () {},
+        callback: (_) {},
       );
       restored.importSnapshot(snapshot);
 
@@ -240,7 +263,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(minutes: 5),
-        callback: () {},
+        callback: (_) {},
         description: 'Refresh app cache',
         intervalDescription: '5m',
       );
@@ -250,7 +273,7 @@ void main() {
       restored.registerTask(
         id: 'refresh',
         interval: const Duration(minutes: 1),
-        callback: () {},
+        callback: (_) {},
       );
       restored.importSnapshot(snapshot);
 
@@ -262,7 +285,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(minutes: 5),
-        callback: () {},
+        callback: (_) {},
         description: 'Existing task description',
         intervalDescription: '5m',
       );
@@ -283,7 +306,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(minutes: 5),
-        callback: () {},
+        callback: (_) {},
       );
 
       expect(
@@ -307,7 +330,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 1),
-        callback: () => originalCalls++,
+        callback: (_) => originalCalls++,
       );
       manager.onPeriodic();
       await _flushAsyncWork();
@@ -317,7 +340,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 20),
-        callback: () => replacementCalls++,
+        callback: (_) => replacementCalls++,
       );
 
       expect(manager.task('refresh')!.interval, const Duration(seconds: 5));
@@ -335,12 +358,12 @@ void main() {
       manager.registerTask(
         id: 'first',
         interval: const Duration(seconds: 1),
-        callback: () {},
+        callback: (_) {},
       );
       manager.registerTask(
         id: 'second',
         interval: const Duration(seconds: 2),
-        callback: () {},
+        callback: (_) {},
       );
 
       final snapshot = {
@@ -377,7 +400,7 @@ void main() {
       manager.registerTask(
         id: 'refresh',
         interval: const Duration(seconds: 1),
-        callback: () {},
+        callback: (_) {},
       );
 
       expect(

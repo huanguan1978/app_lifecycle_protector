@@ -94,7 +94,7 @@ void initializeLifecycle() {
   tasks.registerTask(
     id: 'refresh-cache',
     interval: const Duration(minutes: 5),
-    callback: refreshCache,
+    callback: (id) => refreshCache(id),
   );
   AppLifecycleScheduler.initialize(
     interval: const Duration(seconds: 10),

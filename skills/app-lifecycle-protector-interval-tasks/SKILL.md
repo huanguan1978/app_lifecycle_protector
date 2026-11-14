@@ -29,8 +29,8 @@ class AppEvents extends AppLifecycleEvent {
   void onPeriodic() => tasks.onPeriodic();
 }
 
-Future<void> refreshCache() async {
-  // Call the app's cache-refresh logic here.
+Future<void> refreshCache(String taskId) async {
+  // Use taskId to load the corresponding data and refresh the cache.
 }
 
 void main() {
@@ -57,6 +57,9 @@ how often the manager checks tasks. The 5-minute task interval is measured
 from the last successful completion. A new task runs at a heartbeat check;
 afterward, it runs at the first heartbeat after its interval has elapsed.
 The manager can also be driven by the app's own timer or another event source.
+The task callback receives its registered ID as a `String`; reuse one callback
+for multiple tasks when the ID selects the task's data. Use `(_)` when the
+callback does not need the ID.
 
 ## 2. Tune task intervals and controls
 

@@ -1,6 +1,8 @@
 ## 0.0.7
 
 * Added lightweight interval task management with relative-time scheduling, task controls, and explicit snapshots.
+* Enhanced interval task callbacks to receive the registered task ID as a
+  `String`; callbacks that do not need it can ignore the argument.
 
 ## 0.0.6
 

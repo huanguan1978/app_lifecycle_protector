@@ -49,8 +49,8 @@ class _DemoAppState extends State<DemoApp> {
     )..registerTask(
         id: 'demo-maintenance',
         interval: const Duration(seconds: 15),
-        callback: () {
-          _logs.add('[Task] Demo maintenance ran.');
+        callback: (taskId) {
+          _logs.add('[Task] $taskId ran.');
         },
       );
 

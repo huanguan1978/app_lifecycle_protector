@@ -76,10 +76,15 @@ void startAppLifecycle() {
   );
 }
 
-Future<void> refreshCache() async {
-  // Call the app's cache-refresh logic here.
+Future<void> refreshCache(String taskId) async {
+  // Use taskId to load the corresponding data, then refresh the cache.
 }
 ```
+
+`callback` must accept one `String` argument: the task's registered `id`.
+The same callback can be registered for tasks with different IDs and
+intervals, then use the ID to load each task's data. If a callback does not
+need the ID, ignore it with `callback: (_) => runMaintenance()`.
 
 Call `startAppLifecycle()` after initializing the Flutter binding, for
 example before `runApp()`. In this example:

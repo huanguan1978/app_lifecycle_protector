@@ -20,7 +20,7 @@ void main() {
     tasks.registerTask(
       id: 'heartbeat-task',
       interval: const Duration(minutes: 1),
-      callback: () => taskCalls++,
+      callback: (_) => taskCalls++,
     );
 
     expect(scheduler.isAlive(), isFalse);

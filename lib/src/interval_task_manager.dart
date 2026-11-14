@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:logging/logging.dart';
 
-typedef IntervalTaskCallback = FutureOr<void> Function();
+/// Runs an interval task with the ID it was registered under.
+typedef IntervalTaskCallback = FutureOr<void> Function(String id);
 typedef IntervalTaskErrorHandler = FutureOr<void> Function(
   IntervalTaskFailure failure,
 );
@@ -369,7 +370,7 @@ class AppIntervalTaskManager {
     IntervalTaskCallback callback,
   ) async {
     try {
-      await callback();
+      await callback(task.id);
       if (identical(_tasks[task.id], task)) {
         task._lastSuccessTime = _clock();
       }
