@@ -84,6 +84,7 @@ class _DemoAppState extends State<DemoApp> {
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     AppLifecycleScheduler.instance.dispose();
+    _intervalTaskManager.dispose();
     _networkProbeDemo.dispose();
     _screenSecureDemo.dispose();
     _routeSentry.dispose();

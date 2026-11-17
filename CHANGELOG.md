@@ -5,6 +5,7 @@
   `String`; callbacks that do not need it can ignore the argument.
 * Added `runTaskNow` to manually run an eligible task immediately, bypassing its
   interval check.
+* Added `dispose()` to clean up and prevent task execution after disposal.
 
 ## 0.0.6
 

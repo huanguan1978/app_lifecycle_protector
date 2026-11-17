@@ -476,6 +476,101 @@ void main() {
         throwsFormatException,
       );
     });
+
+    group('dispose', () {
+      test('prevents new tasks from being registered', () {
+        manager.registerTask(
+          id: 'task1',
+          interval: const Duration(seconds: 1),
+          callback: (_) {},
+        );
+        manager.dispose();
+
+        expect(
+          () => manager.registerTask(
+            id: 'task2',
+            interval: const Duration(seconds: 1),
+            callback: (_) {},
+          ),
+          throwsStateError,
+        );
+      });
+
+      test('prevents heartbeats from starting new tasks', () async {
+        var calls = 0;
+        manager.registerTask(
+          id: 'task1',
+          interval: const Duration(seconds: 1),
+          callback: (_) => calls++,
+        );
+        manager.onPeriodic();
+        await _flushAsyncWork();
+        expect(calls, 1);
+
+        manager.dispose();
+        manager.onPeriodic();
+        await _flushAsyncWork();
+        expect(calls, 1); // No additional calls after dispose
+      });
+
+      test('clears all registered tasks', () {
+        manager.registerTask(
+          id: 'task1',
+          interval: const Duration(seconds: 1),
+          callback: (_) {},
+        );
+        manager.registerTask(
+          id: 'task2',
+          interval: const Duration(seconds: 2),
+          callback: (_) {},
+        );
+        expect(manager.tasks, hasLength(2));
+
+        manager.dispose();
+        expect(manager.tasks, isEmpty);
+      });
+
+      test('sets isDisposed flag', () {
+        expect(manager.isDisposed, false);
+        manager.dispose();
+        expect(manager.isDisposed, true);
+      });
+
+      test('clears error handler', () {
+        manager.onError = (_) {};
+        manager.dispose();
+        expect(manager.onError, isNull);
+      });
+
+      test('idempotent - can be called multiple times', () {
+        manager.registerTask(
+          id: 'task1',
+          interval: const Duration(seconds: 1),
+          callback: (_) {},
+        );
+        manager.dispose();
+        manager.dispose(); // Should not throw
+        expect(manager.isDisposed, true);
+      });
+
+      test('prevents other state modifications', () {
+        manager.registerTask(
+          id: 'task1',
+          interval: const Duration(seconds: 1),
+          callback: (_) {},
+        );
+        manager.dispose();
+
+        expect(
+          () => manager.updateInterval('task1', const Duration(seconds: 2)),
+          throwsStateError,
+        );
+        expect(
+          () => manager.startTask('task1'),
+          throwsStateError,
+        );
+      });
+    });
   });
 }
 

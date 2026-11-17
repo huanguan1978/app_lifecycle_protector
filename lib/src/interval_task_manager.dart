@@ -112,6 +112,10 @@ class AppIntervalTaskManager {
   /// Optional global handler called after a task failure is logged.
   IntervalTaskErrorHandler? onError;
 
+  /// Whether [dispose] has been called.
+  bool get isDisposed => _isDisposed;
+  bool _isDisposed = false;
+
   /// Registered tasks in insertion order. The returned list is unmodifiable.
   List<IntervalTask> get tasks =>
       List<IntervalTask>.unmodifiable(_tasks.values);
@@ -134,6 +138,7 @@ class AppIntervalTaskManager {
     String intervalDescription = '',
     bool reset = false,
   }) {
+    _requireNotDisposed();
     _validateTaskDefinition(id, interval);
 
     final existing = _tasks[id];
@@ -165,10 +170,14 @@ class AppIntervalTaskManager {
   }
 
   /// Removes [id] from the manager. Returns `false` if it was not registered.
-  bool removeTask(String id) => _tasks.remove(id) != null;
+  bool removeTask(String id) {
+    _requireNotDisposed();
+    return _tasks.remove(id) != null;
+  }
 
   /// Enables [id], clearing its stopped or paused state.
   void startTask(String id) {
+    _requireNotDisposed();
     final task = _requireTask(id);
     task
       .._isStopped = false
@@ -180,6 +189,7 @@ class AppIntervalTaskManager {
   /// Paused or stopped tasks are not run, and an already running task is not
   /// started again. A successful manual run updates the last success time.
   void runTaskNow(String id) {
+    _requireNotDisposed();
     final task = _requireTask(id);
     if (task._isStopped || task._isPaused || _runningTaskIds.contains(id)) {
       return;
@@ -189,6 +199,7 @@ class AppIntervalTaskManager {
 
   /// Stops [id]; the stopped state is included in exported snapshots.
   void stopTask(String id) {
+    _requireNotDisposed();
     final task = _requireTask(id);
     task
       .._isStopped = true
@@ -197,6 +208,7 @@ class AppIntervalTaskManager {
 
   /// Temporarily pauses [id]. A paused state is not exported.
   void pauseTask(String id) {
+    _requireNotDisposed();
     final task = _requireTask(id);
     if (!task._isStopped) {
       task._isPaused = true;
@@ -207,6 +219,7 @@ class AppIntervalTaskManager {
   ///
   /// The task's description fields are preserved.
   void updateInterval(String id, Duration interval) {
+    _requireNotDisposed();
     if (interval <= Duration.zero) {
       throw ArgumentError.value(interval, 'interval', 'Must be positive.');
     }
@@ -224,6 +237,7 @@ class AppIntervalTaskManager {
     String? description,
     String? intervalDescription,
   }) {
+    _requireNotDisposed();
     if (interval != null && interval <= Duration.zero) {
       throw ArgumentError.value(interval, 'interval', 'Must be positive.');
     }
@@ -241,6 +255,8 @@ class AppIntervalTaskManager {
   /// A task without a successful run is immediately eligible. While its
   /// callback or error handler is running, further heartbeats do not overlap it.
   void onPeriodic() {
+    if (_isDisposed) return;
+
     final now = _clock();
     for (final task in List<IntervalTask>.of(_tasks.values)) {
       if (task._isStopped ||
@@ -251,6 +267,21 @@ class AppIntervalTaskManager {
       }
       _startTask(task);
     }
+  }
+
+  /// Cleans up and stops all interval tasks.
+  ///
+  /// After calling dispose:
+  /// - [onPeriodic] will not start any new tasks
+  /// - All registered tasks are cleared
+  /// - [onError] is set to null
+  /// - Currently running tasks are allowed to complete asynchronously
+  /// - The manager should not be used further
+  void dispose() {
+    if (_isDisposed) return;
+    _isDisposed = true;
+    _tasks.clear();
+    onError = null;
   }
 
   /// Exports a detached, JSON-compatible snapshot of durable task state.
@@ -278,6 +309,7 @@ class AppIntervalTaskManager {
   /// must already have a callback registered under the same stable ID. Tasks
   /// not present in the snapshot keep their current state.
   void importSnapshot(Map<String, dynamic> snapshot) {
+    _requireNotDisposed();
     if (_runningTaskIds.isNotEmpty) {
       throw StateError('Cannot import a snapshot while tasks are running.');
     }
@@ -425,6 +457,12 @@ class AppIntervalTaskManager {
       throw StateError('No interval task is registered with ID "$id".');
     }
     return task;
+  }
+
+  void _requireNotDisposed() {
+    if (_isDisposed) {
+      throw StateError('Cannot use AppIntervalTaskManager after dispose.');
+    }
   }
 
   static void _validateTaskDefinition(String id, Duration interval) {
