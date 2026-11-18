@@ -84,7 +84,6 @@ class MockBiometricValidator implements BiometricValidator {
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:app_lifecycle_protector/app_lifecycle_protector.dart';
 
 // 全局安全状态管理
@@ -114,48 +113,36 @@ class _MyAppState extends State<MyApp> {
       event: MySecurityHandler(screenSecure),
     );
 
-    // 2. 监听硬件键盘交互（全局）
-    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
-
-    // 3. 设置闲置超时时长为 5 分钟
+    // 2. 设置闲置超时时长为 5 分钟
     AppLifecycleScheduler.instance.aliveDuration = const Duration(minutes: 5);
-  }
-
-  bool _handleKeyEvent(KeyEvent event) {
-    AppLifecycleScheduler.instance.updateAliveStatus();
-    return false;
   }
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     AppLifecycleScheduler.instance.dispose();
     super.dispose();
   }
 
+  void _handleUnlocked() {
+    screenSecure.unlock();
+    // 重要：解锁后务必刷新活跃状态，否则下一次巡检会因为超时立刻再次锁屏
+    AppLifecycleScheduler.instance.updateAliveStatus();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      // 重要：捕获屏幕触摸交互（点击、滑动等）以刷新活跃状态，防止“闲置锁屏”误触发
-      onPointerDown: (_) => AppLifecycleScheduler.instance.updateAliveStatus(),
+    return UserInteractionListener(
       child: MaterialApp(
         title: 'Security App',
         home: Builder(
           builder: (context) {
-            // 定义解锁后的操作
-            void onUnlocked() {
-              screenSecure.unlock();
-              // 重要：解锁后务必刷新活跃状态，否则下一次巡检会因为超时立刻再次锁屏
-              AppLifecycleScheduler.instance.updateAliveStatus();
-            }
-
             // 构建授权界面
             final lockWidget = BiometricLockScreen(
               validator: MockBiometricValidator(),
-              onUnlocked: onUnlocked,
+              onUnlocked: _handleUnlocked,
               fallback: PassphraseLockScreen(
                 onValidate: (pw, _) => pw == "123456" ? null : "密码错误",
-                onUnlocked: onUnlocked,
+                onUnlocked: _handleUnlocked,
               ),
             );
 
@@ -191,15 +178,69 @@ class MyHomePage extends StatelessWidget {
 ## 📌 关键点拨
 
 ### 如何精准捕获用户交互？
-为了防止用户在活跃使用（如阅读、输入）时被误判为闲置，我们建议采用“组合拳”：
-*   **触摸/鼠标**：示例中的 `Listener` 覆盖了所有点击、滑动等指针事件。
-*   **硬件键盘**：示例中的 `HardwareKeyboard.addHandler` 覆盖了物理按键输入。
-*   **软件键盘（重要）**：由于系统软键盘的按键点击不属于指针事件，**编辑器类应用**建议在 `TextField.onChanged` 中手动刷新状态：
+为了防止用户在活跃使用（如阅读、输入）时被误判为闲置，本包提供了 **`UserInteractionListener`** 工具类，可统一管理所有用户交互的捕获。这是推荐的做法：
+
+```dart
+MaterialApp(
+  home: UserInteractionListener(
+    child: MyHomePage(),
+  ),
+)
+```
+
+`UserInteractionListener` 一次性覆盖以下交互类型：
+*   **触摸/鼠标**：所有指针事件（点击、滑动、移动等）
+*   **硬件键盘**：所有物理按键输入
+*   **滚动事件**：列表滚动、页面滑动等
+
+如果你不使用 `UserInteractionListener`，也可手动组装多种交互监听器。下面是底层的详细方法（作为参考）：
+
+<details>
+<summary><b>展开：手动组装多种交互监听器（仅供参考，推荐使用 UserInteractionListener）</b></summary>
+
+通过组合以下几种方式可以捕获各类交互：
+*   **触摸/鼠标**：根级别 `Listener` 覆盖了所有点击、滑动等指针事件。
+*   **硬件键盘**：用 `HardwareKeyboard.addHandler` 覆盖物理按键输入。
+*   **软件键盘（特殊处理）**：由于系统软键盘的按键点击不属于指针事件，**编辑器类应用**应在 `TextField.onChanged` 中手动刷新状态：
   ```dart
   TextField(
     onChanged: (_) => AppLifecycleScheduler.instance.updateAliveStatus(),
   )
   ```
+
+如果采用手动方式，代码示例如下：
+```dart
+class _MyAppState extends State<MyApp> {
+  bool _handleKeyEvent(KeyEvent event) {
+    AppLifecycleScheduler.instance.updateAliveStatus();
+    return false;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => AppLifecycleScheduler.instance.updateAliveStatus(),
+      child: MaterialApp(
+        // 应用配置...
+      ),
+    );
+  }
+}
+```
+
+</details>
 
 ### 如何立即加锁？
 在某些场景下（如用户手动点击“安全退出”），你可以直接调用：

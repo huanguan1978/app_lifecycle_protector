@@ -93,7 +93,6 @@ covered. To protect every route, see the global-protection pattern below.
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:app_lifecycle_protector/app_lifecycle_protector.dart';
 
 final ScreenSecure screenSecure = ScreenSecure();
@@ -121,13 +120,6 @@ class _MyAppState extends State<MyApp> {
     );
     AppLifecycleScheduler.instance.aliveDuration =
         const Duration(minutes: 5);
-
-    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
-  }
-
-  bool _handleKeyEvent(KeyEvent event) {
-    AppLifecycleScheduler.instance.updateAliveStatus();
-    return false;
   }
 
   void _onUnlocked() {
@@ -138,16 +130,13 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     AppLifecycleScheduler.instance.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: (_) =>
-          AppLifecycleScheduler.instance.updateAliveStatus(),
+    return UserInteractionListener(
       child: MaterialApp(
         title: 'Security App',
         home: Builder(
@@ -175,6 +164,7 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
+
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
 
@@ -194,16 +184,37 @@ class MyHomePage extends StatelessWidget {
 
 ### Track user activity accurately
 
-To avoid locking the app while someone is actively using it, update the
-activity timestamp for the input types your app supports:
+To avoid locking the app while someone is actively using it, the package
+provides **`UserInteractionListener`**, a utility widget that unifies activity
+tracking across all interaction types. This is the recommended approach:
 
-- **Touch, mouse, and other pointer input:** A root-level `Listener` can
-  observe pointer-down events.
+```dart
+MaterialApp(
+  home: UserInteractionListener(
+    child: MyHomePage(),
+  ),
+)
+```
+
+`UserInteractionListener` covers:
+- **Touch, mouse, and other pointer input:** clicks, drags, scrolling, etc.
+- **Hardware keyboard:** all physical key presses.
+- **Scroll notifications:** list and page scrolling.
+
+If you prefer to assemble interaction tracking manually, the following
+approaches remain available for reference:
+
+<details>
+<summary><b>Expand: Manual activity tracking (reference only; prefer UserInteractionListener)</b></summary>
+
+You can combine multiple interaction sources:
+- **Touch and mouse:** A root-level `Listener` observes all pointer-down
+  events.
 - **Hardware keyboard:** Register a handler with
-  `HardwareKeyboard.instance.addHandler` and remove it when the owning widget
-  is disposed.
-- **Software keyboard:** Soft-keyboard input is not reported as pointer input.
-  For text-heavy screens, refresh activity in `TextField.onChanged`:
+  `HardwareKeyboard.instance.addHandler` and remove it on disposal.
+- **Software keyboard (special case):** Soft-keyboard input is not reported as
+  pointer input. For text-heavy screens, refresh activity in
+  `TextField.onChanged`:
 
   ```dart
   TextField(
@@ -211,6 +222,42 @@ activity timestamp for the input types your app supports:
         AppLifecycleScheduler.instance.updateAliveStatus(),
   )
   ```
+
+If you assemble listeners manually:
+
+```dart
+class _MyAppState extends State<MyApp> {
+  bool _handleKeyEvent(KeyEvent event) {
+    AppLifecycleScheduler.instance.updateAliveStatus();
+    return false;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) =>
+          AppLifecycleScheduler.instance.updateAliveStatus(),
+      child: MaterialApp(
+        // App config...
+      ),
+    );
+  }
+}
+```
+
+</details>
 
 ### Lock the app manually
 

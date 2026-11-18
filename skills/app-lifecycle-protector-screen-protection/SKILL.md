@@ -83,7 +83,7 @@ overlay does not authenticate the user.
 
 When the app should mask on pause, unmask on resume, or lock after inactivity,
 prefer `AppLifecycleScheduler` rather than adding another lifecycle observer
-and timer:
+and timer. Use `UserInteractionListener` to automatically track activity:
 
 ```dart
 class SecurityEvents extends AppLifecycleEvent {
@@ -113,14 +113,7 @@ class SecurityEvents extends AppLifecycleEvent {
 
 Initialize the scheduler after Flutter binding initialization, then set
 `AppLifecycleScheduler.instance.aliveDuration` to the desired idle timeout.
-Refresh activity with `updateAliveStatus()` from the app's relevant input
-sources (pointer, hardware keyboard, and text input as needed). The example
-above illustrates the integration pattern; adapt callback timing to the
-app's security policy.
-
-Create the shared `ScreenSecure` before initializing the scheduler, pass it to
-`SecurityEvents`, and wrap the protected content with `ScreenProtector`. For
-example:
+The activity timer is automatically managed by `UserInteractionListener`:
 
 ```dart
 final screenSecure = ScreenSecure();
@@ -134,6 +127,24 @@ void main() {
   AppLifecycleScheduler.instance.aliveDuration =
       const Duration(minutes: 5);
   runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return UserInteractionListener(
+      child: MaterialApp(
+        builder: (context, child) {
+          return ScreenProtector(
+            screenSecure: screenSecure,
+            lockWidget: MyLockWidget(),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+        home: const MyHomePage(),
+      ),
+    );
+  }
 }
 ```
 

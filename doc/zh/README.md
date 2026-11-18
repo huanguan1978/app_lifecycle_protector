@@ -45,7 +45,17 @@ void initializeLifecycle() {
 
 在 Flutter binding 初始化之后调用 `initializeLifecycle()`，例如在 `runApp` 前或根组件的 `initState` 中。第一次 `onPeriodic()` 会在一个 `interval` 过去后触发。
 
-`AppLifecycleEvent` 还提供 `onIdle()`：在 `aliveDuration` 内没有记录到用户交互后，于下一次周期心跳派发一次。调用 `updateAliveStatus()` 记录用户交互并开始新一轮空闲计时。此事件与应用前后台状态无关。
+`AppLifecycleEvent` 还提供 `onIdle()`：在 `aliveDuration` 内没有记录到用户交互后，于下一次周期心跳派发一次。为了方便捕获用户交互，本包提供了 `UserInteractionListener` 工具类，可自动监听所有用户交互（触摸、键盘、滚动等），开发者只需将其包裹在应用根部件即可：
+
+```dart
+MaterialApp(
+  home: UserInteractionListener(
+    child: MyHomePage(),
+  ),
+)
+```
+
+也可手动调用 `updateAliveStatus()` 在需要的地方记录用户交互并开始新一轮空闲计时。`isAlive()` 可查询用户是否仍处于活跃状态；首次记录操作前返回 `false`。
 
 ## 三个可复用功能
 

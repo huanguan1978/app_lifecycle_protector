@@ -66,9 +66,22 @@ first `onPeriodic()` callback runs after one `interval` has elapsed.
 
 `AppLifecycleEvent` also provides `onIdle()`, which is dispatched once after
 the configured `aliveDuration` passes without recorded user interaction.
-Call `updateAliveStatus()` whenever the user interacts with the UI to restart
-the idle timer. The event is independent of foreground/background state and is
-checked on the next periodic heartbeat.
+To simplify activity tracking, the package provides `UserInteractionListener`,
+a utility widget that automatically monitors all user interactions (touch,
+keyboard, scrolling, etc.). Wrap your app's root with it:
+
+```dart
+MaterialApp(
+  home: UserInteractionListener(
+    child: MyHomePage(),
+  ),
+)
+```
+
+Alternatively, you can call `updateAliveStatus()` manually in your event
+handlers. `isAlive()` queries whether the user is currently active; it returns
+`false` until activity has first been recorded. The idle check is independent
+of foreground/background state and occurs on the next periodic heartbeat.
 
 ## Three reusable features
 

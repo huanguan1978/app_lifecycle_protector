@@ -1,3 +1,10 @@
+## 0.0.8
+
+* Added `UserInteractionListener` widget for automatic user activity tracking across touch, keyboard, and scroll events.
+* Updated screen protection documentation to recommend `UserInteractionListener` for simplified idle-event handling.
+* Simplified example app by consolidating scattered activity tracking into unified `UserInteractionListener` wrapper.
+* Enhanced lifecycle and screen-protection skills with `UserInteractionListener` integration guidance.
+
 ## 0.0.7
 
 * Added lightweight interval task management with relative-time scheduling, task controls, and explicit snapshots.

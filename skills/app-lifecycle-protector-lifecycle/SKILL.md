@@ -61,8 +61,20 @@ The first `onPeriodic()` call occurs after one interval.
 Override `onIdle()` to respond once on the next heartbeat after `aliveDuration`
 passes without recorded user interaction. This signal is independent of
 foreground state and background work. The idle clock starts when the scheduler
-is initialized; calling `updateAliveStatus()` from relevant input sources
-starts a new idle period. The default timeout is three minutes:
+is initialized.
+
+To automatically track user activity, use `UserInteractionListener`:
+
+```dart
+MaterialApp(
+  home: UserInteractionListener(
+    child: MyHomePage(),
+  ),
+)
+```
+
+Alternatively, call `updateAliveStatus()` manually from relevant input sources
+to restart the idle period. The default timeout is three minutes:
 
 ```dart
 AppLifecycleScheduler.instance.aliveDuration =

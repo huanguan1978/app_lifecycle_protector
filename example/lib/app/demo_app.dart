@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 import 'package:app_lifecycle_protector/app_lifecycle_protector.dart';
 
@@ -65,13 +64,6 @@ class _DemoAppState extends State<DemoApp> {
       logger: Logger('ExampleScheduler'),
     );
     AppLifecycleScheduler.instance.aliveDuration = const Duration(seconds: 60);
-
-    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
-  }
-
-  bool _handleKeyEvent(KeyEvent event) {
-    AppLifecycleScheduler.instance.updateAliveStatus();
-    return false;
   }
 
   void _handleUnlocked() {
@@ -82,7 +74,6 @@ class _DemoAppState extends State<DemoApp> {
 
   @override
   void dispose() {
-    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
     AppLifecycleScheduler.instance.dispose();
     _intervalTaskManager.dispose();
     _networkProbeDemo.dispose();
@@ -94,8 +85,7 @@ class _DemoAppState extends State<DemoApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      onPointerDown: (_) => AppLifecycleScheduler.instance.updateAliveStatus(),
+    return UserInteractionListener(
       child: MaterialApp(
         title: 'App Lifecycle Protector Demo',
         theme: ThemeData(
@@ -130,3 +120,4 @@ class _DemoAppState extends State<DemoApp> {
     );
   }
 }
+

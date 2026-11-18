@@ -72,10 +72,12 @@ task controls and explicit snapshot persistence, see the
 Open **Screen protection** to see the app-wide `ScreenProtector`, privacy
 masking, manual locking, and idle-timeout locking. The biometric validator is a
 mock that deliberately fails; choose the alternate method and enter `123456`
-to unlock. Pointer and keyboard interactions refresh the activity timer.
+to unlock. 
 
-This UI overlay demonstrates Flutter-level masking and locking. It does not
-provide production authentication or operating-system screenshot protection.
+The example uses `UserInteractionListener` to automatically track user
+interactions (touch, keyboard, scrolling), so the idle timer refreshes without
+manual refresh calls. This is the recommended approach for activity tracking in
+production apps.
 
 ### Network probe
 
